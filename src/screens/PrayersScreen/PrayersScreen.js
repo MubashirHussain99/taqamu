@@ -28,182 +28,7 @@ const PRAYER_ARABIC_NAMES = {
 // PrayerTimesScreen component
 const PrayerTimesScreen = ({onTogglePrayed}) => {
   const navigation = useNavigation();
-  // const [currentPrayer, setCurrentPrayer] = useState(null);
-  // const [allPrayers, setAllPrayers] = useState([]);
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
-  // const [profile, setProfile] = useState(null);
-  // const [selectedDate, setSelectedDate] = useState(null);
-  // const [prayerCompletionState, setPrayerCompletionState] = useState({});
-  // const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     try {
-  //       const token = await AsyncStorage.getItem('token');
-
-  //       const response = await fetch(`${api}/user/profile`, {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-
-  //       const responseText = await response.text();
-
-  //       if (responseText.startsWith('<')) {
-  //         throw new Error('Server returned HTML instead of JSON.');
-  //       }
-
-  //       const data = JSON.parse(responseText);
-  //       setProfile(data);
-  //     } catch (err) {
-  //       console.error('Error fetching profile:', err);
-  //       setError('Failed to fetch user profile.');
-  //     } finally {
-  //       setLoadingProfile(false); // Hide loading
-  //     }
-  //   };
-
-  //   fetchProfile();
-  //   setLoadingProfile(false);
-  // }, [loadingProfile]);
-
-  // const getLocationCoordinates = async () => {
-  //   const encodedCity = encodeURIComponent(profile?.city);
-  //   const encodedCountry = encodeURIComponent(profile?.country);
-
-  //   const url = `https://nominatim.openstreetmap.org/search?city=${encodedCity}&country=${encodedCountry}&format=json`;
-
-  //   const response = await axios.get(url, {
-  //     headers: {'Accept-Language': 'en'},
-  //   });
-
-  //   const results = response.data;
-
-  //   if (!Array.isArray(results) || results.length === 0) {
-  //     throw new Error('No coordinates found');
-  //   }
-
-  //   const data = results[0];
-
-  //   return {
-  //     latitude: parseFloat(data.lat),
-  //     longitude: parseFloat(data.lon),
-  //   };
-  // };
-
-  // useEffect(() => {
-  //   if (profile?.city && profile?.country) {
-  //     console.log('yaha aya hun mein');
-  //     console.log('yaha aya hun mein');
-  //     console.log(profile?.city, profile?.country);
-  //     console.log('yaha aya hun mein');
-  //     console.log('yaha aya hun mein');
-  //     getLocationCoordinates();
-  //   }
-  // }, [profile]);
-
-  // const getFormattedRemainingTime = prayerTime => {
-  //   const now = new Date();
-  //   const diffMinutes = differenceInMinutes(prayerTime, now);
-
-  //   if (diffMinutes < 60) {
-  //     return `${diffMinutes} min remaining`;
-  //   } else {
-  //     const hours = Math.floor(diffMinutes / 60);
-  //     const minutes = diffMinutes % 60;
-  //     return `${hours} hr ${minutes} min remaining`;
-  //   }
-  // };
-  // const calculatePrayerTimes = async () => {
-  //   const locationCoordinates = await getLocationCoordinates();
-  //   const {latitude, longitude} = locationCoordinates;
-  //   const adhanCoordinates = new Coordinates(latitude, longitude);
-  //   const date = new Date();
-  //   const calculationParams = CalculationMethod.MoonsightingCommittee();
-  //   const prayerTimes = new adhan.PrayerTimes(
-  //     adhanCoordinates,
-  //     date,
-  //     calculationParams,
-  //   );
-
-  //   const prayers = [
-  //     {
-  //       name: 'Fajr',
-  //       arabicName: PRAYER_ARABIC_NAMES.fajr,
-  //       time: format(prayerTimes.fajr, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //     {
-  //       name: 'Sunrise',
-  //       arabicName: PRAYER_ARABIC_NAMES.sunrise,
-  //       time: format(prayerTimes.sunrise, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //     {
-  //       name: 'Dhuhr',
-  //       arabicName: PRAYER_ARABIC_NAMES.dhuhr,
-  //       time: format(prayerTimes.dhuhr, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //     {
-  //       name: 'Asr',
-  //       arabicName: PRAYER_ARABIC_NAMES.asr,
-  //       time: format(prayerTimes.asr, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //     {
-  //       name: 'Maghrib',
-  //       arabicName: PRAYER_ARABIC_NAMES.maghrib,
-  //       time: format(prayerTimes.maghrib, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //     {
-  //       name: 'Isha',
-  //       arabicName: PRAYER_ARABIC_NAMES.isha,
-  //       time: format(prayerTimes.isha, 'h:mm a'),
-  //       isCurrentPrayer: false,
-  //     },
-  //   ];
-
-  //   const currentPrayerName = prayerTimes.currentPrayer();
-  //   const nextPrayerName = prayerTimes.nextPrayer();
-
-  //   let nextPrayer = null;
-
-  //   prayers.forEach(prayer => {
-  //     const lowerName = prayer.name.toLowerCase();
-
-  //     if (nextPrayerName === lowerName) {
-  //       prayer.isCurrentPrayer = true;
-
-  //       const nextPrayerTime = prayerTimes[lowerName];
-  //       if (nextPrayerTime) {
-  //         prayer.remainingTime = getFormattedRemainingTime(nextPrayerTime);
-  //         nextPrayer = {...prayer};
-  //       }
-  //     }
-  //   });
-
-  //   console.log(prayers, 'prayers111111');
-
-  //   setAllPrayers(prayers);
-  //   setCurrentPrayer(nextPrayer);
-  //   setLoading(false);
-  // };
-  // useEffect(() => {
-  //   calculatePrayerTimes();
-  // }, [loadingProfile]);
-  // const today = new Date();
-
-  // // Handle navigation back to previous screen
-  // const handleBack = () => {
-  //   navigation.goBack();
-  // };
-
-  // console.log(allPrayers, 'all prayers');
   const [currentPrayer, setCurrentPrayer] = useState(null);
   const [allPrayers, setAllPrayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -219,8 +44,8 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
         const token = await AsyncStorage.getItem('token');
         const API_URL = Platform.select({
           android: 'http://10.0.2.2:5000/api', // For Android emulator
-          ios: 'http://localhost:5000/api',     // For iOS simulator
-          default: 'http://localhost:5000/api'  // For other environments
+          ios: 'http://localhost:5000/api', // For iOS simulator
+          default: 'http://localhost:5000/api', // For other environments
         });
         const response = await fetch(`${API_URL}/user/profile`, {
           method: 'GET',
@@ -356,7 +181,6 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
         }
       });
 
-
       setAllPrayers(prayers);
       setCurrentPrayer(nextPrayer);
       setLoading(false);
@@ -379,7 +203,6 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
   const handleBack = () => {
     navigation.goBack();
   };
-
 
   return (
     <View style={styles.container}>

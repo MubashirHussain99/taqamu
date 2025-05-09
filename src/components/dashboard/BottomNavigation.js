@@ -2,10 +2,10 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
-import Dashboard from '../../screens/dashboard';
-import PrayersScreen from '../../screens/PrayersScreen';
-import QuranScreen from '../../screens/QuranScreen';
-import UmmahScreen from '../../screens/UmmahScreen';
+import Dashboard from '../../screens/dashboard/dashboard';
+import PrayersScreen from '../../screens/PrayersScreen/PrayersScreen';
+import QuranScreen from '../../screens/QuranScreen/QuranScreen';
+import UmmahScreen from '../../screens/UmmahScreen/UmmahScreen';
 
 const RootNavigator = ({city, country}) => {
   const navigation = useNavigation();

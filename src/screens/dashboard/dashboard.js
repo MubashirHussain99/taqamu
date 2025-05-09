@@ -316,8 +316,8 @@ const Dashboard = () => {
         }
         const API_URL = Platform.select({
           android: 'http://10.0.2.2:5000/api', // For Android emulator
-          ios: 'http://localhost:5000/api',     // For iOS simulator
-          default: 'http://localhost:5000/api'  // For other environments
+          ios: 'http://localhost:5000/api', // For iOS simulator
+          default: 'http://localhost:5000/api', // For other environments
         });
 
         const response = await fetch(`${API_URL}/user/profile`, {
@@ -446,9 +446,9 @@ const Dashboard = () => {
     try {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
-      console.log("User data removed successfully.");
+      console.log('User data removed successfully.');
     } catch (error) {
-      console.error("Error removing user data:", error);
+      console.error('Error removing user data:', error);
     }
   };
   const handleLogout = async () => {
@@ -456,7 +456,6 @@ const Dashboard = () => {
     // Navigate to Login screen or handle the logout process
     navigation.navigate('Login');
   };
-  
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -476,7 +475,6 @@ const Dashboard = () => {
           />
         </TouchableOpacity>
 
-        
         <View style={styles.headerCenter}>
           <Text style={styles.appName}>
             {profile?.name.charAt(0).toUpperCase() + profile?.name.slice(1)}
@@ -499,7 +497,9 @@ const Dashboard = () => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.notificationIcon}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Notifications')}
+          style={styles.notificationIcon}>
           <Text style={styles.notificationBadge}>2</Text>
           <Text>🔔</Text>
         </TouchableOpacity>
@@ -511,8 +511,12 @@ const Dashboard = () => {
           isTablet && styles.contentTablet,
         ]}>
         {/* Prayer Times - Implement as separate component */}
-        <PrayerTimes city={profile?.city} country={profile?.country} variant="compact" />
-       
+        <PrayerTimes
+          city={profile?.city}
+          country={profile?.country}
+          variant="compact"
+        />
+
         {/* Feature Icons */}
         <View style={[styles.section, isTablet && styles.sectionTablet]}>
           <View style={styles.sectionHeader}>
@@ -757,7 +761,7 @@ const Dashboard = () => {
             <TouchableOpacity
               style={styles.editProfileButton}
               // onPress={() => setIsEditing(!isEditing)}
-              >
+            >
               <Text style={styles.editProfileButtonText}>Edit Profile</Text>
             </TouchableOpacity>
 
