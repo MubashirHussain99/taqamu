@@ -294,17 +294,7 @@ const Dashboard = () => {
   const {width} = Dimensions.get('window');
   const isTablet = width >= 768;
   const [showCharity, setShowCharity] = useState(false);
-
-  // Note: Implement these components as separate files
-  // const RandomAyahOfTheDay = require('./components/RandomAyahOfTheDay');
-  // const HadithOfTheDay = require('./components/HadithOfTheDay');
-  // const SupportGuidance = require('./components/SupportGuidance');
-  // const CharityCampaign = require('./components/CharityCampaign');
-  // const PrayerTimes = require('./components/PrayerTimes');
-  // const DailyGoalCard = require('./components/DailyGoalCard');
-  // const DhikrCounter = require('./components/DhikrCounter');
-  // const LocationModal = require('./components/LocationModal');
-
+  const [profileTrigger, setProfileTrigger] = useState(true);
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -486,7 +476,16 @@ const Dashboard = () => {
               {profile?.country.charAt(0).toUpperCase() +
                 profile?.country.slice(1)}
             </Text>
-            <TouchableOpacity onPress={() => setShowLocationModal(true)}>
+            {/* <TouchableOpacity onPress={() => setShowLocationModal(true)}>
+              <Text style={styles.editIcon}>✏️</Text>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('EditProfileScreen', {
+                  profile: profile, // the profile data that was fetched
+                  setProfileTrigger: setProfileTrigger, // passing the trigger state function
+                })
+              }>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>

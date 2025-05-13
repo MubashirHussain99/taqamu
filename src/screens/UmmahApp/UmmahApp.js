@@ -13,7 +13,7 @@ import {
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import { Image } from 'react-native-svg';
+import {Image} from 'react-native-svg';
 
 const Tab = createBottomTabNavigator();
 
@@ -67,7 +67,7 @@ const ChatModal = ({visible, onClose, user}) => {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Chat with {user?.name}</Text>
             <TouchableOpacity onPress={onClose}>
-              <Icon name="close" size={24} color="#fff" />
+              <Text>❌</Text>
             </TouchableOpacity>
           </View>
 
@@ -121,7 +121,7 @@ const CreateGroupModal = ({visible, onClose, onCreate}) => {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Create New Group</Text>
             <TouchableOpacity onPress={onClose}>
-              <Icon name="close" size={24} color="#fff" />
+              <Text>❌</Text>
             </TouchableOpacity>
           </View>
 
@@ -170,6 +170,159 @@ const CreateGroupModal = ({visible, onClose, onCreate}) => {
             style={styles.createGroupButton}
             onPress={handleCreate}>
             <Text style={styles.createGroupButtonText}>Create Group</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+// const CreateForumModal = ({visible, onClose, onCreate}) => {
+//   const [groupName, setGroupName] = useState('');
+//   const [groupType, setGroupType] = useState('study');
+//   const [description, setDescription] = useState('');
+
+//   const handleCreate = () => {
+//     if (!groupName.trim()) {
+//       Alert.alert('Error', 'Please enter a group name');
+//       return;
+//     }
+
+//     const newGroup = {
+//       name: groupName,
+//       type: groupType,
+//       description,
+//     };
+
+//     onCreate(newGroup);
+//     onClose();
+//   };
+
+//   return (
+//     <Modal
+//       animationType="slide"
+//       transparent={true}
+//       visible={visible}
+//       onRequestClose={onClose}>
+//       <View style={styles.modalContainer}>
+//         <View style={styles.modalContent}>
+//           <View style={styles.modalHeader}>
+//             <Text style={styles.modalTitle}>Create New Group</Text>
+//             <TouchableOpacity onPress={onClose}>
+//               <Text>❌</Text>
+//             </TouchableOpacity>
+//           </View>
+
+//           <TextInput
+//             style={styles.input}
+//             placeholder="Group Name"
+//             value={groupName}
+//             onChangeText={setGroupName}
+//           />
+
+//           <View style={styles.typeSelector}>
+//             <Text style={styles.label}>Group Type:</Text>
+//             <View style={styles.typeOptions}>
+//               {['study', 'networking', 'support', 'art', 'charity'].map(
+//                 type => (
+//                   <TouchableOpacity
+//                     key={type}
+//                     style={[
+//                       styles.typeOption,
+//                       groupType === type && styles.selectedTypeOption,
+//                     ]}
+//                     onPress={() => setGroupType(type)}>
+//                     <Text
+//                       style={
+//                         groupType === type
+//                           ? styles.selectedTypeText
+//                           : styles.typeText
+//                       }>
+//                       {type.charAt(0).toUpperCase() + type.slice(1)}
+//                     </Text>
+//                   </TouchableOpacity>
+//                 ),
+//               )}
+//             </View>
+//           </View>
+
+//           <TextInput
+//             style={[styles.input, styles.descriptionInput]}
+//             placeholder="Group Description"
+//             multiline
+//             value={description}
+//             onChangeText={setDescription}
+//           />
+
+//           <TouchableOpacity
+//             style={styles.createGroupButton}
+//             onPress={handleCreate}>
+//             <Text style={styles.createGroupButtonText}>Create Group</Text>
+//           </TouchableOpacity>
+//         </View>
+//       </View>
+//     </Modal>
+//   );
+// };
+const CreateForumModal = ({visible, onClose, onCreate}) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleCreate = () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a forum title');
+      return;
+    }
+
+    const newForum = {
+      title,
+      description,
+      stats: '0',
+      posts: '0 posts',
+      time: 'Just now',
+    };
+
+    onCreate(newForum);
+    onClose();
+
+    // Optional: Clear inputs
+    setTitle('');
+    setDescription('');
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Create New Forum</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={{fontSize: 18}}>❌</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Forum Title"
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <TextInput
+            style={[styles.input, styles.descriptionInput]}
+            placeholder="Forum Description"
+            multiline
+            value={description}
+            onChangeText={setDescription}
+          />
+
+          <TouchableOpacity
+            style={styles.createGroupButton}
+            onPress={handleCreate}>
+            <Text style={styles.createGroupButtonText}>Create Forum</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -641,8 +794,8 @@ const GroupsScreen = () => {
 const ForumsScreen = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const forumsData = [
+  const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
+  const [forumsData, setForumsData] = useState([
     {
       id: '1',
       title: 'Religious Discussions',
@@ -687,7 +840,25 @@ const ForumsScreen = () => {
       posts: '328 posts',
       time: '15 min ago',
     },
-  ];
+  ]);
+  const handleCreateForum = newForum => {
+  const newId = (forumsData.length + 1).toString();
+
+  setForumsData(prev => [
+    ...prev,
+    {
+      id: newId,
+      title: newForum.title,
+      description: newForum.description,
+      stats: '0',
+      posts: '0 posts',
+      time: 'Just now',
+    },
+  ]);
+
+  Alert.alert('Success', 'Forum created successfully!');
+};
+
 
   return (
     <View style={styles.screenContainer}>
@@ -734,10 +905,17 @@ const ForumsScreen = () => {
           </View>
         )}
       />
-
-      <TouchableOpacity style={styles.createButton}>
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={() => setCreateGroupModalVisible(true)}>
         <Text style={styles.createButtonText}>+ Create New Forum</Text>
       </TouchableOpacity>
+
+      <CreateForumModal
+        visible={createGroupModalVisible}
+        onClose={() => setCreateGroupModalVisible(false)}
+        onCreate={handleCreateForum}
+      />
     </View>
   );
 };

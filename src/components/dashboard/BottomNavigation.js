@@ -44,7 +44,7 @@ const RootNavigator = ({city, country}) => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('UmmahScreen')}>
+        onPress={() => navigation.navigate('UmmahApp')}>
         <Image
           source={require('../../assets/images/ummah.png')}
           style={styles.icon}
