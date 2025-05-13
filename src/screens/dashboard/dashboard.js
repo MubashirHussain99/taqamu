@@ -549,7 +549,7 @@ const Dashboard = () => {
                     } else if (feature === 'Zakat') {
                       navigation.navigate('Zakat');
                     } else if (feature === 'Ummah') {
-                      navigation.navigate('Ummah');
+                      navigation.navigate('UmmahApp');
                     }
                   }}>
                   <View style={styles.featureIcon}>

@@ -185,7 +185,6 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
       setCurrentPrayer(nextPrayer);
       setLoading(false);
     } catch (err) {
-      console.error('Error calculating prayer times:', err);
       setError('Failed to calculate prayer times.');
     }
   };

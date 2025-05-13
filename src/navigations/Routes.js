@@ -15,6 +15,7 @@ import ZakatScreen from '../screens/ZakatScreen/ZakatScreen';
 import UmmahDonationScreen from '../screens/UmmahDonationScreen/UmmahDonationScreen';
 import PrayerTimesScreen from '../components/dashboard/PrayerTimesScreen';
 import Notifications from '../screens/Notifications/Notifications';
+import UmmahApp from '../screens/UmmahApp/UmmahApp';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +40,7 @@ export default function AppRoutes() {
       <Stack.Screen name="Ummah" component={UmmahDonationScreen} />
       <Stack.Screen name="PrayerTimesScreen" component={PrayerTimesScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="UmmahApp" component={UmmahApp} />
     </Stack.Navigator>
   );
 }
