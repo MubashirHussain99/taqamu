@@ -90,7 +90,7 @@ const AyahOfTheDay = ({
 
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
-            <Text style={[styles.footnote, { color: subtextColor }]}>20</Text>
+            {/* <Text style={[styles.footnote, { color: subtextColor }]}>20</Text> */}
           </View>
 
           {onMarkAsRead && (

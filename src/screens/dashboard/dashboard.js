@@ -759,8 +759,13 @@ const Dashboard = () => {
 
             <TouchableOpacity
               style={styles.editProfileButton}
-              // onPress={() => setIsEditing(!isEditing)}
-            >
+              onPress={() => {
+                // setIsEditing(!isEditing);
+                navigation.navigate('EditProfileScreen', {
+                  profile: profile, // the profile data that was fetched
+                  setProfileTrigger: setProfileTrigger, // passing the trigger state function
+                });
+              }}>
               <Text style={styles.editProfileButtonText}>Edit Profile</Text>
             </TouchableOpacity>
 
