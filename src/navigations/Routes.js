@@ -17,6 +17,7 @@ import PrayerTimesScreen from '../components/dashboard/PrayerTimesScreen';
 import Notifications from '../screens/Notifications/Notifications';
 import UmmahApp from '../screens/UmmahApp/UmmahApp';
 import EditProfileScreen from '../screens/EditProfileScreen/EditProfileScreen';
+import NearbyMosquesScreen from '../screens/NearbyMosquesScreen/NearbyMosquesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +44,10 @@ export default function AppRoutes() {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="UmmahApp" component={UmmahApp} />
       <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+      <Stack.Screen
+        name="NearbyMosquesScreen"
+        component={NearbyMosquesScreen}
+      />
     </Stack.Navigator>
   );
 }

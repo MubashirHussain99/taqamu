@@ -2,10 +2,6 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
-import Dashboard from '../../screens/dashboard/dashboard';
-import PrayersScreen from '../../screens/PrayersScreen/PrayersScreen';
-import QuranScreen from '../../screens/QuranScreen/QuranScreen';
-import UmmahScreen from '../../screens/UmmahScreen/UmmahScreen';
 
 const RootNavigator = ({city, country}) => {
   const navigation = useNavigation();
@@ -46,10 +42,19 @@ const RootNavigator = ({city, country}) => {
         style={styles.button}
         onPress={() => navigation.navigate('UmmahApp')}>
         <Image
-          source={require('../../assets/images/ummah.png')}
+          source={require('../../assets/images/umaah.png')}
           style={styles.icon}
         />
         <Text style={styles.buttonText}>Ummah</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('NearbyMosquesScreen')}>
+        <Image
+          source={require('../../assets/images/ummah.png')}
+          style={styles.icon}
+        />
+        <Text style={styles.buttonText}>Mosque</Text>
       </TouchableOpacity>
     </View>
   );
@@ -75,8 +80,8 @@ const styles = StyleSheet.create({
     gap: 5, // Space between icon and text
   },
   icon: {
-    width: 20, // Set the width for the image
-    height: 20, // Set the height for the image
+    width: 30, // Set the width for the image
+    height: 30, // Set the height for the image
     marginRight: 8, // Space between icon and text
   },
   buttonText: {
