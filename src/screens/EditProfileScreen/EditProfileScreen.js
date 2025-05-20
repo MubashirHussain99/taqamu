@@ -1,4 +1,4 @@
-import React, {use, useEffect, useState} from 'react';
+import React, {use, useState} from 'react';
 import {
   View,
   TextInput,
@@ -28,7 +28,6 @@ const EditProfileScreen = ({route}) => {
     ios: 'https://taqamu-backend.vercel.app/api',
     default: 'https://taqamu-backend.vercel.app/api',
   });
-  
 
   const handleUpdate = async () => {
     try {

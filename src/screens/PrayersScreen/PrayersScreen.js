@@ -42,18 +42,25 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
     const fetchProfile = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
+        const storedUserString = await AsyncStorage.getItem('user');
+
+        const storedUser = JSON.parse(storedUserString); // convert to object
+        console.log(storedUser.id, 'storedUser.id');
         const API_URL = Platform.select({
-          android: 'http://10.0.2.2:5000/api', // For Android emulator
-          ios: 'http://localhost:5000/api', // For iOS simulator
-          default: 'http://localhost:5000/api', // For other environments
+          android: 'https://taqamu-backend.vercel.app/api', // For Android emulator
+          ios: 'https://taqamu-backend.vercel.app/api', // For iOS simulator
+          default: 'https://taqamu-backend.vercel.app/api', // For other environments
         });
-        const response = await fetch(`${API_URL}/user/profile`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${API_URL}/auth/get-user/${storedUser.id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         const responseText = await response.text();
 
