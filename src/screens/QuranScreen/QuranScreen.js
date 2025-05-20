@@ -172,11 +172,18 @@
 // });
 
 // File: src/screens/QuranScreen/QuranScreen.js
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RootNavigator from '../../components/dashboard/BottomNavigation';
+import Sound from 'react-native-sound';
 
 const QuranScreen = () => {
   const navigation = useNavigation();
@@ -194,7 +201,9 @@ const QuranScreen = () => {
       let allSurahs = [];
 
       for (let i = 1; i <= 114; i++) {
-        const response = await fetch(`https://api.alquran.cloud/v1/surah/${i}/editions/ar.alafasy,en.sahih`);
+        const response = await fetch(
+          `https://api.alquran.cloud/v1/surah/${i}/editions/ar.alafasy,en.sahih`,
+        );
         const data = await response.json();
 
         const arabicAyahs = data.data[0].ayahs;
@@ -237,16 +246,27 @@ const QuranScreen = () => {
 
   const toggleSurah = async (surahNumber, ayahNumber) => {
     const ayahKey = `${surahNumber}-${ayahNumber}`;
-    const newReadAyahs = { ...readAyahs, [ayahKey]: !readAyahs[ayahKey] };
+    const newReadAyahs = {...readAyahs, [ayahKey]: !readAyahs[ayahKey]};
     setReadAyahs(newReadAyahs);
     await AsyncStorage.setItem('readAyahs', JSON.stringify(newReadAyahs));
+  };
+  const playAudio = url => {
+    const sound = new Sound(url, null, error => {
+      if (error) {
+        console.log('Audio loading error:', error);
+        return;
+      }
+      sound.play(() => {
+        sound.release(); // Free up resources
+      });
+    });
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={{ fontSize: 24 }}>❌</Text>
+          <Text style={{fontSize: 24}}>❌</Text>
         </TouchableOpacity>
         <Text style={styles.title}>القرآن الكريم</Text>
       </View>
@@ -255,13 +275,14 @@ const QuranScreen = () => {
         <Text style={styles.loadingText}>Loading...</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {quranData.map((surah) => (
+          {quranData.map(surah => (
             <View key={surah.number} style={styles.surahContainer}>
               <TouchableOpacity
                 onPress={() =>
-                  setExpandedSurah(expandedSurah === surah.number ? null : surah.number)
-                }
-              >
+                  setExpandedSurah(
+                    expandedSurah === surah.number ? null : surah.number,
+                  )
+                }>
                 <Text style={styles.surahName}>
                   {surah.number}. {surah.name} - {surah.englishName}
                 </Text>
@@ -279,12 +300,19 @@ const QuranScreen = () => {
                     return (
                       <TouchableOpacity
                         key={index}
-                        onPress={() => toggleSurah(surah.number, ayah.number)}
-                      >
-                        <Text style={[styles.ayahText, isRead && styles.readAyah]}>
+                        onPress={() => toggleSurah(surah.number, ayah.number)}>
+                        <Text
+                          style={[styles.ayahText, isRead && styles.readAyah]}>
                           {ayah.number}. {ayah.arabic}
                         </Text>
-                        <Text style={styles.translationText}>{ayah.english}</Text>
+                        <Text style={styles.translationText}>
+                          {ayah.english}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => playAudio(ayah.audio)}
+                          style={{alignSelf: 'flex-end', marginTop: 4}}>
+                          <Text>👂</Text>
+                        </TouchableOpacity>
                       </TouchableOpacity>
                     );
                   })}

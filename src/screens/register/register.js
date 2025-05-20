@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -25,12 +25,13 @@ const RegisterScreen = () => {
   const [error, setError] = useState(null);
 
   const validateForm = () => {
-    if (!form.name || form.name.length < 2) return 'Name must be at least 2 characters';
-    if (!form.email || !form.email.includes('@')) return 'Please enter a valid email address';
-    if (!form.country || form.country.length < 2) return 'Please enter a valid country name';
-    if (!form.city || form.city.length < 2) return 'Please enter a valid city name';
-    if (!form.password || form.password.length < 6) return 'Password must be at least 6 characters';
-    if (form.password !== form.confirmPassword) return 'Passwords do not match';
+    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+      return 'Please fill all required fields.';
+    }
+    if (form.password !== form.confirmPassword) {
+      return 'Passwords do not match.';
+    }
+    // You can add more validations like email format here
     return null;
   };
 
@@ -50,9 +51,9 @@ const RegisterScreen = () => {
 
     try {
       const API_URL = Platform.select({
-        android: 'http://10.0.2.2:5000/api',
-        ios: 'http://localhost:5000/api',
-        default: 'http://localhost:5000/api',
+        android: 'https://taqamu-backend.vercel.app/api',
+        ios: 'https://taqamu-backend.vercel.app/api',
+        default: 'https://taqamu-backend.vercel.app/api',
       });
 
       const response = await fetch(`${API_URL}/auth/register`, {
@@ -70,46 +71,63 @@ const RegisterScreen = () => {
       });
 
       const responseText = await response.text();
+      console.log('Raw server response:', responseText);
+
       if (responseText.startsWith('<')) {
-        throw new Error('Server returned HTML. Check your API.');
+        throw new Error('Server returned HTML instead of JSON.');
       }
 
-      const data = JSON.parse(responseText);
-      console.log('Registration successful:', data);
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        throw new Error('Invalid JSON from server.');
+      }
 
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed.');
+      }
+
+      console.log('✅ Registration successful:', data);
       navigation.navigate('Login');
     } catch (err) {
-      console.error('Registration failed:', err);
+      console.error('❌ Registration failed:', err);
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Taqamu</Text>
       <Text style={styles.subtitle}>Create an account</Text>
 
-      {['name', 'email', 'country', 'city', 'password', 'confirmPassword'].map((field) => (
-        <TextInput
-          key={field}
-          placeholder={field === 'confirmPassword' ? 'Confirm Password' : field[0].toUpperCase() + field.slice(1)}
-          placeholderTextColor="#aaa"
-          secureTextEntry={field.includes('password')}
-          value={form[field]}
-          onChangeText={(text) => handleChange(field, text)}
-          style={styles.input}
-        />
-      ))}
+      {['name', 'email', 'country', 'city', 'password', 'confirmPassword'].map(
+        field => (
+          <TextInput
+            key={field}
+            placeholder={
+              field === 'confirmPassword'
+                ? 'Confirm Password'
+                : field[0].toUpperCase() + field.slice(1)
+            }
+            placeholderTextColor="#aaa"
+            secureTextEntry={field.includes('password', 'confirmPassword')}
+            value={form[field]}
+            onChangeText={text => handleChange(field, text)}
+            style={styles.input}
+          />
+        ),
+      )}
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       <TouchableOpacity
         style={styles.button}
         onPress={onSubmit}
-        disabled={isLoading}
-      >
+        disabled={isLoading}>
         <Text style={styles.buttonText}>
           {isLoading ? 'Creating Account...' : 'Register'}
         </Text>

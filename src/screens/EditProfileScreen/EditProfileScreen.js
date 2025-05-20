@@ -1,4 +1,4 @@
-import React, {use, useState} from 'react';
+import React, {use, useEffect, useState} from 'react';
 import {
   View,
   TextInput,
@@ -24,10 +24,11 @@ const EditProfileScreen = ({route}) => {
   const [password, setPassword] = useState('');
 
   const API_URL = Platform.select({
-    android: 'http://10.0.2.2:5000/api',
-    ios: 'http://localhost:5000/api',
-    default: 'http://localhost:5000/api',
+    android: 'https://taqamu-backend.vercel.app/api',
+    ios: 'https://taqamu-backend.vercel.app/api',
+    default: 'https://taqamu-backend.vercel.app/api',
   });
+  
 
   const handleUpdate = async () => {
     try {
@@ -48,7 +49,7 @@ const EditProfileScreen = ({route}) => {
 
       console.log('Sending update data:', updateData);
 
-      const response = await fetch(`${API_URL}/user/profile`, {
+      const response = await fetch(`${API_URL}/auth/update-user/${profile?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

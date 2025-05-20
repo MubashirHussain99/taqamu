@@ -14,7 +14,7 @@ import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {apiRequest} from '../../services/api/queryClient';
-import { api } from '../../services/api/api';
+import {api} from '../../services/api/api';
 // import { api } from '../../services/api/api';
 
 const {width} = Dimensions.get('window');
@@ -37,9 +37,8 @@ const LoginScreen = () => {
     return null;
   };
   useEffect(() => {
-    console.log("API:", api); // make sure correct URL aa raha
+    console.log('API:', api); // make sure correct URL aa raha
   }, []);
-  
 
   const onSubmit = async () => {
     const errorMsg = validateForm();
@@ -47,45 +46,43 @@ const LoginScreen = () => {
       setError(errorMsg);
       return;
     }
-  
+
     setIsLoading(true);
     setError(null);
-    console.log(email, "------email-----");
-    console.log(password, "------password-----");
-  
+
     try {
       // Use the correct API URL for your environment
       const API_URL = Platform.select({
-        android: 'http://10.0.2.2:5000/api', // For Android emulator
-        ios: 'http://localhost:5000/api',     // For iOS simulator
-        default: 'http://localhost:5000/api'  // For other environments
+        android: 'https://taqamu-backend.vercel.app/api',
+        ios: 'https://taqamu-backend.vercel.app/api',
+        default: 'https://taqamu-backend.vercel.app/api',
       });
-  
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json' // Explicitly ask for JSON response
         },
-        body: JSON.stringify({ // Fixed: Added proper body formatting
+        body: JSON.stringify({
+          // Fixed: Added proper body formatting
           email: email,
-          password: password
-        })
+          password: password,
+        }),
       });
-  
+
       // First check if response is HTML (starts with '<')
       const responseText = await response.text();
       if (responseText.startsWith('<')) {
-        throw new Error('Server returned HTML instead of JSON. Check API endpoint.');
+        throw new Error(
+          'Server returned HTML instead of JSON. Check API endpoint.',
+        );
       }
       const data = JSON.parse(responseText);
-      console.log(data.token, "------data-----");
-  
+      console.log(data.user, '------data-----');
+
       // Properly await AsyncStorage operations
       await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(data.user)); // Fixed: Added JSON.stringify
-  
-  
+      await AsyncStorage.setItem('user', JSON.stringify(data.user));
       // Now parse as JSON
       navigation.navigate('Dashboard');
       setEmail('');

@@ -299,24 +299,30 @@ const Dashboard = () => {
     const fetchProfile = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
+        const storedUserString = await AsyncStorage.getItem('user');
 
+        const storedUser = JSON.parse(storedUserString); // convert to object
+        console.log(storedUser.id, 'storedUser.id');
         if (!token) {
           setError('No token found. Please log in again.');
           return;
         }
         const API_URL = Platform.select({
-          android: 'http://10.0.2.2:5000/api', // For Android emulator
-          ios: 'http://localhost:5000/api', // For iOS simulator
-          default: 'http://localhost:5000/api', // For other environments
+          android: 'https://taqamu-backend.vercel.app/api', // For Android emulator
+          ios: 'https://taqamu-backend.vercel.app/api', // For iOS simulator
+          default: 'https://taqamu-backend.vercel.app/api', // For other environments
         });
 
-        const response = await fetch(`${API_URL}/user/profile`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${API_URL}/auth/get-user/${storedUser.id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         const responseText = await response.text();
 
@@ -325,6 +331,7 @@ const Dashboard = () => {
         }
 
         const data = JSON.parse(responseText);
+        console.log(data, 'data');
         setProfile(data);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -351,36 +358,6 @@ const Dashboard = () => {
 
     fetchAuthData();
   }, []);
-  // const handleDhikrCountChange = count => {
-  //   setDhikrCount(count);
-
-  //   if (count >= currentDhikr.targetCount) {
-  //     if (!completedDhikrs.includes(currentDhikr.id)) {
-  //       const newCompletedDhikrs = [...completedDhikrs, currentDhikr.id];
-  //       setCompletedDhikrs(newCompletedDhikrs);
-
-  //       if (currentDhikrIndex < dhikrTypes.length - 1) {
-  //         setCurrentDhikrIndex(currentDhikrIndex + 1);
-  //         setDhikrCount(0);
-  //       }
-  //     }
-  //   }
-
-  //   const updatedGoals = dailyGoals.map(goal => {
-  //     if (goal.title.toLowerCase().includes('dhikr')) {
-  //       if (completedDhikrs.length > 0 || count >= currentDhikr.targetCount) {
-  //         goal.completed = true;
-  //       }
-  //       goal.progress = {
-  //         current: count,
-  //         total: currentDhikr.targetCount,
-  //       };
-  //     }
-  //     return goal;
-  //   });
-
-  //   setCompletedGoals(updatedGoals.filter(goal => goal.completed).length);
-  // };
   const handleDhikrCountChange = count => {
     setDhikrCount(count);
 
@@ -476,9 +453,6 @@ const Dashboard = () => {
               {profile?.country.charAt(0).toUpperCase() +
                 profile?.country.slice(1)}
             </Text>
-            {/* <TouchableOpacity onPress={() => setShowLocationModal(true)}>
-              <Text style={styles.editIcon}>✏️</Text>
-            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate('EditProfileScreen', {
