@@ -26,6 +26,7 @@ import SupportGuidance from '../../components/dashboard/SupportGuidance';
 import RootNavigator from '../../components/dashboard/BottomNavigation';
 import {Button} from 'react-native';
 import Charity from '../../components/dashboard/Charity';
+import NotificationTester from '../../components/notification_fix/NotificationTester';
 
 // const todayHijri = new HijriDate(); // This gives you the current Islamic date
 // const hijriDateString = `${todayHijri.getDate()}-${
@@ -331,7 +332,6 @@ const Dashboard = () => {
         }
 
         const data = JSON.parse(responseText);
-        console.log(data, 'data');
         setProfile(data);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -483,6 +483,7 @@ const Dashboard = () => {
           styles.content,
           isTablet && styles.contentTablet,
         ]}>
+        {/* <NotificationTester /> */}
         {/* Prayer Times - Implement as separate component */}
         <PrayerTimes
           city={profile?.city}

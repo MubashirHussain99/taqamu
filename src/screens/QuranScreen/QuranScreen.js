@@ -1,35 +1,65 @@
 // // File: src/screens/QuranScreen/QuranScreen.js
-// import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-// import React, { useEffect, useState } from 'react';
-// import { useNavigation } from '@react-navigation/native';
+// import {
+//   StyleSheet,
+//   Text,
+//   View,
+//   ScrollView,
+//   TouchableOpacity,
+// } from 'react-native';
+// import React, {useEffect, useState} from 'react';
+// import {useNavigation} from '@react-navigation/native';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 // import RootNavigator from '../../components/dashboard/BottomNavigation';
+// import Sound from 'react-native-sound';
 
 // const QuranScreen = () => {
 //   const navigation = useNavigation();
 //   const [quranData, setQuranData] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [expandedSurah, setExpandedSurah] = useState(null);
-//   const [readAyahs, setReadAyahs] = useState({}); // Track read Ayahs
+//   const [readAyahs, setReadAyahs] = useState({});
 
 //   useEffect(() => {
-//     const fetchQuran = async () => {
-//       try {
-//         const response = await fetch('https://api.alquran.cloud/v1/quran/ar.alafasy');
-//         const data = await response.json();
-//         setQuranData(data.data.surahs);
-//         setLoading(false);
-//         loadReadAyahs(); // Load read Ayahs from AsyncStorage
-//       } catch (error) {
-//         console.error('خطأ في جلب بيانات القرآن:', error);
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchQuran();
+//     fetchAllSurahs();
 //   }, []);
 
-//   // Load read Ayahs from AsyncStorage
+//   const fetchAllSurahs = async () => {
+//     try {
+//       let allSurahs = [];
+
+//       for (let i = 1; i <= 114; i++) {
+//         const response = await fetch(
+//           `https://api.alquran.cloud/v1/surah/${i}/editions/ar.alafasy,en.sahih`,
+//         );
+//         const data = await response.json();
+
+//         const arabicAyahs = data.data[0].ayahs;
+//         const englishAyahs = data.data[1].ayahs;
+
+//         const mergedAyahs = arabicAyahs.map((ayah, index) => ({
+//           number: ayah.numberInSurah,
+//           arabic: ayah.text,
+//           english: englishAyahs[index]?.text || '',
+//         }));
+
+//         allSurahs.push({
+//           number: data.data[0].number,
+//           name: data.data[0].name,
+//           englishName: data.data[0].englishName,
+//           revelationType: data.data[0].revelationType,
+//           ayahs: mergedAyahs,
+//         });
+//       }
+
+//       setQuranData(allSurahs);
+//       await loadReadAyahs();
+//     } catch (error) {
+//       console.error('Error fetching Quran:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
 //   const loadReadAyahs = async () => {
 //     try {
 //       const storedReadAyahs = await AsyncStorage.getItem('readAyahs');
@@ -41,12 +71,22 @@
 //     }
 //   };
 
-//   // Toggle the read state of an Ayah and store it in AsyncStorage
 //   const toggleSurah = async (surahNumber, ayahNumber) => {
 //     const ayahKey = `${surahNumber}-${ayahNumber}`;
-//     const newReadAyahs = { ...readAyahs, [ayahKey]: !readAyahs[ayahKey] };
+//     const newReadAyahs = {...readAyahs, [ayahKey]: !readAyahs[ayahKey]};
 //     setReadAyahs(newReadAyahs);
 //     await AsyncStorage.setItem('readAyahs', JSON.stringify(newReadAyahs));
+//   };
+//   const playAudio = url => {
+//     const sound = new Sound(url, null, error => {
+//       if (error) {
+//         console.log('Audio loading error:', error);
+//         return;
+//       }
+//       sound.play(() => {
+//         sound.release(); // Free up resources
+//       });
+//     });
 //   };
 
 //   return (
@@ -62,30 +102,44 @@
 //         <Text style={styles.loadingText}>Loading...</Text>
 //       ) : (
 //         <ScrollView contentContainerStyle={styles.scrollContainer}>
-//           {quranData.map((surah) => (
+//           {quranData.map(surah => (
 //             <View key={surah.number} style={styles.surahContainer}>
-//               <TouchableOpacity onPress={() => setExpandedSurah(expandedSurah === surah.number ? null : surah.number)}>
+//               <TouchableOpacity
+//                 onPress={() =>
+//                   setExpandedSurah(
+//                     expandedSurah === surah.number ? null : surah.number,
+//                   )
+//                 }>
 //                 <Text style={styles.surahName}>
 //                   {surah.number}. {surah.name} - {surah.englishName}
 //                 </Text>
 //               </TouchableOpacity>
-
 //               <Text style={styles.surahInfo}>
-//                 {surah.ayahs.length} آية | {surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}
+//                 {surah.ayahs.length} آية |{' '}
+//                 {surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}
 //               </Text>
 
 //               {expandedSurah === surah.number && (
 //                 <View style={styles.versesContainer}>
 //                   {surah.ayahs.map((ayah, index) => {
 //                     const ayahKey = `${surah.number}-${ayah.number}`;
-//                     const isRead = readAyahs[ayahKey] || false; // Check if this Ayah is read
+//                     const isRead = readAyahs[ayahKey] || false;
 //                     return (
-//                       <TouchableOpacity key={index} onPress={() => toggleSurah(surah.number, ayah.number)}>
+//                       <TouchableOpacity
+//                         key={index}
+//                         onPress={() => toggleSurah(surah.number, ayah.number)}>
 //                         <Text
-//                           style={[styles.ayahText, isRead && styles.readAyah]} // Apply green color if read
-//                         >
-//                           {index + 1}. {ayah.text}
+//                           style={[styles.ayahText, isRead && styles.readAyah]}>
+//                           {ayah.number}. {ayah.arabic}
 //                         </Text>
+//                         <Text style={styles.translationText}>
+//                           {ayah.english}
+//                         </Text>
+//                         <TouchableOpacity
+//                           onPress={() => playAudio(ayah.audio)}
+//                           style={{alignSelf: 'flex-end', marginTop: 4}}>
+//                           <Text>👂</Text>
+//                         </TouchableOpacity>
 //                       </TouchableOpacity>
 //                     );
 //                   })}
@@ -95,7 +149,7 @@
 //           ))}
 //         </ScrollView>
 //       )}
-//       <RootNavigator/>
+//       <RootNavigator />
 //     </View>
 //   );
 // };
@@ -129,10 +183,6 @@
 //     padding: 16,
 //     marginBottom: 12,
 //     borderRadius: 8,
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
 //     elevation: 2,
 //   },
 //   surahName: {
@@ -157,10 +207,17 @@
 //     fontSize: 16,
 //     color: '#34495e',
 //     textAlign: 'right',
+//     marginBottom: 4,
+//   },
+//   translationText: {
+//     fontSize: 14,
+//     color: '#555',
+//     textAlign: 'left',
 //     marginBottom: 8,
+//     fontStyle: 'italic',
 //   },
 //   readAyah: {
-//     color: '#34d399', // Green color for read Ayah
+//     color: '#34d399',
 //   },
 //   loadingText: {
 //     fontSize: 16,
@@ -191,6 +248,7 @@ const QuranScreen = () => {
   const [loading, setLoading] = useState(true);
   const [expandedSurah, setExpandedSurah] = useState(null);
   const [readAyahs, setReadAyahs] = useState({});
+  const [visibleSurahs, setVisibleSurahs] = useState(7); // Pagination
 
   useEffect(() => {
     fetchAllSurahs();
@@ -213,6 +271,7 @@ const QuranScreen = () => {
           number: ayah.numberInSurah,
           arabic: ayah.text,
           english: englishAyahs[index]?.text || '',
+          audio: ayah.audio || '', // ensure audio url
         }));
 
         allSurahs.push({
@@ -250,6 +309,7 @@ const QuranScreen = () => {
     setReadAyahs(newReadAyahs);
     await AsyncStorage.setItem('readAyahs', JSON.stringify(newReadAyahs));
   };
+
   const playAudio = url => {
     const sound = new Sound(url, null, error => {
       if (error) {
@@ -275,7 +335,7 @@ const QuranScreen = () => {
         <Text style={styles.loadingText}>Loading...</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {quranData.map(surah => (
+          {quranData.slice(0, visibleSurahs).map(surah => (
             <View key={surah.number} style={styles.surahContainer}>
               <TouchableOpacity
                 onPress={() =>
@@ -300,9 +360,14 @@ const QuranScreen = () => {
                     return (
                       <TouchableOpacity
                         key={index}
-                        onPress={() => toggleSurah(surah.number, ayah.number)}>
+                        onPress={() =>
+                          toggleSurah(surah.number, ayah.number)
+                        }>
                         <Text
-                          style={[styles.ayahText, isRead && styles.readAyah]}>
+                          style={[
+                            styles.ayahText,
+                            isRead && styles.readAyah,
+                          ]}>
                           {ayah.number}. {ayah.arabic}
                         </Text>
                         <Text style={styles.translationText}>
@@ -320,6 +385,15 @@ const QuranScreen = () => {
               )}
             </View>
           ))}
+
+          {/* Load More Button */}
+          {visibleSurahs < quranData.length && (
+            <TouchableOpacity
+              onPress={() => setVisibleSurahs(prev => prev + 7)}
+              style={styles.loadMoreButton}>
+              <Text style={styles.loadMoreText}>Load More</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       )}
       <RootNavigator />
@@ -398,5 +472,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#fff',
     height: '77%',
+  },
+  loadMoreButton: {
+    backgroundColor: '#2563eb',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

@@ -47,7 +47,7 @@ const RootNavigator = ({city, country}) => {
         />
         <Text style={styles.buttonText}>Ummah</Text>
       </TouchableOpacity>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('NearbyMosquesScreen')}>
         <Image
@@ -55,7 +55,7 @@ const RootNavigator = ({city, country}) => {
           style={styles.icon}
         />
         <Text style={styles.buttonText}>Mosque</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

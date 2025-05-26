@@ -52,11 +52,11 @@ const CharityCampaign = ({
             </View>
           </View>
         </View>
-        {onDonate && (
+        {/* {onDonate && (
           <TouchableOpacity onPress={onDonate} style={styles.donateButton}>
             <Text style={styles.donateButtonText}>Donate</Text>
           </TouchableOpacity>
-        )}
+        )} */}
       </View>
     </View>
   );
@@ -102,7 +102,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 10
+    marginBottom: 10,
+    width:"100%",
   },
   cardContainer: {
     backgroundColor: '#1e293b',
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   },
   donateButton: {
     backgroundColor: '#f59e0b',
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
     paddingVertical: 6,
     borderRadius: 8
   },
@@ -170,7 +171,8 @@ const styles = StyleSheet.create({
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    width:"100%",
   },
   flexGrow: {
     flex: 1,

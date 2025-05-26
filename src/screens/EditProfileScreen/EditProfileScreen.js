@@ -88,7 +88,7 @@ const EditProfileScreen = ({route}) => {
         <Text style={styles.heading}>Update Profile</Text>
       </View>
 
-      <Text style={styles.label}>Name</Text>
+      {/* <Text style={styles.label}>Name</Text>
       <TextInput
         style={styles.input}
         value={name}
@@ -104,7 +104,7 @@ const EditProfileScreen = ({route}) => {
         onChangeText={setEmail}
         placeholder="Email"
         placeholderTextColor="#bbb"
-      />
+      /> */}
 
       <Text style={styles.label}>City</Text>
       <TextInput
@@ -124,7 +124,7 @@ const EditProfileScreen = ({route}) => {
         placeholderTextColor="#bbb"
       />
 
-      <Text style={styles.label}>Password (optional)</Text>
+      {/* <Text style={styles.label}>Password (optional)</Text>
       <TextInput
         style={styles.input}
         value={password}
@@ -132,7 +132,7 @@ const EditProfileScreen = ({route}) => {
         placeholder="Password"
         secureTextEntry
         placeholderTextColor="#bbb"
-      />
+      /> */}
 
       <Button title="Update Profile" onPress={handleUpdate} color="#1E90FF" />
     </ScrollView>
