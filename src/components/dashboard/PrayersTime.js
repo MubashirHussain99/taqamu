@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   configureNotifications,
   initializeNotificationService,
-  showTestNotification,
+  schedulePrayerNotification,
   startPrayerTimeWatcher,
 } from '../notification_fix/NotificationService';
 
@@ -184,9 +184,6 @@ const PrayerTimes = ({
 
       let nextPrayer = null;
 
-      // First cancel all existing notifications to prevent duplicates
-      // await cancelAllPrayerNotifications();
-      console.log(prayers, '12354678---prayers');
       prayers.forEach(prayer => {
         const lowerName = prayer.name.toLowerCase();
 
@@ -195,11 +192,27 @@ const PrayerTimes = ({
           prayer.remainingTime = getFormattedRemainingTime(prayer.exactTime);
           nextPrayer = {...prayer};
         }
-        // startPrayerTimeWatcher(prayer.name, '6:53 PM');
-        // Schedule notification for all future prayers
-        if (currentPrayer) {
-          // schedulePrayerNotification(prayer.name, '6:15 PM');
-          startPrayerTimeWatcher(currentPrayer.name, currentPrayer.time);
+
+        // if (prayer.exactTime > new Date()) {
+        //   console.log(
+        //     'Scheduling notification for:',
+        //     currentPrayer.name,
+        //     currentPrayer.exactTime,
+        //   );
+        //   schedulePrayerNotification(
+        //     currentPrayer.name,
+        //     currentPrayer.exactTime,
+        //   );
+        // }
+      });
+      prayers.forEach(prayer => {
+        console.log(
+          'Scheduling notification for:',
+          prayer.name,
+          prayer.exactTime?.toISOString(),
+        );
+        if (prayer.exactTime instanceof Date && prayer.exactTime > new Date()) {
+          schedulePrayerNotification(prayer.name, prayer.exactTime);
         }
       });
 
