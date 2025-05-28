@@ -11,10 +11,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import LocationSearch from '../../components/layout/LocationSearch';
 
 const EditProfileScreen = ({route}) => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
   const {profile, setProfileTrigger} = route.params;
 
   const [name, setName] = useState(profile?.name || '');
@@ -24,9 +25,9 @@ const EditProfileScreen = ({route}) => {
   const [password, setPassword] = useState('');
 
   const API_URL = Platform.select({
-    android: 'https://taqamu-backend.vercel.app/api',
-    ios: 'https://taqamu-backend.vercel.app/api',
-    default: 'https://taqamu-backend.vercel.app/api',
+    android: 'https://taqamu-app-backend.vercel.app/api',
+    ios: 'https://taqamu-app-backend.vercel.app/api',
+    default: 'https://taqamu-app-backend.vercel.app/api',
   });
 
   const handleUpdate = async () => {
@@ -48,14 +49,17 @@ const EditProfileScreen = ({route}) => {
 
       console.log('Sending update data:', updateData);
 
-      const response = await fetch(`${API_URL}/auth/update-user/${profile?.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${API_URL}/auth/update-user/${profile?.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updateData),
         },
-        body: JSON.stringify(updateData),
-      });
+      );
 
       const responseText = await response.text();
       console.log('Response:', responseText);
@@ -68,7 +72,7 @@ const EditProfileScreen = ({route}) => {
       setProfileTrigger(true);
 
       Alert.alert('Success', 'Profile updated successfully', [
-        {text: 'OK', onPress: () => navigation.navigate("Dashboard")},
+        {text: 'OK', onPress: () => navigation.navigate('Dashboard')},
       ]);
     } catch (err) {
       console.error('Update error:', err.message);
@@ -77,35 +81,24 @@ const EditProfileScreen = ({route}) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}  keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate("Dashboard");
+            navigation.navigate('Dashboard');
           }}>
           <Text>❌</Text>
         </TouchableOpacity>
         <Text style={styles.heading}>Update Profile</Text>
       </View>
-
-      {/* <Text style={styles.label}>Name</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Name"
-        placeholderTextColor="#bbb"
+      <Text style={styles.label}>Location</Text>
+      <LocationSearch
+        onSelect={({city, country}) => {
+          setCity(city);
+          setCountry(country);
+        }}
       />
-
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        placeholderTextColor="#bbb"
-      /> */}
-
+      {/*           
       <Text style={styles.label}>City</Text>
       <TextInput
         style={styles.input}
@@ -121,16 +114,6 @@ const EditProfileScreen = ({route}) => {
         value={country}
         onChangeText={setCountry}
         placeholder="Country"
-        placeholderTextColor="#bbb"
-      />
-
-      {/* <Text style={styles.label}>Password (optional)</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
         placeholderTextColor="#bbb"
       /> */}
 

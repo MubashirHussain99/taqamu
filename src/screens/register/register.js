@@ -36,7 +36,7 @@ const RegisterScreen = () => {
   };
 
   const handleChange = (key, value) => {
-    setForm({ ...form, [key]: value });
+    setForm({...form, [key]: value});
   };
 
   const onSubmit = async () => {
@@ -51,9 +51,10 @@ const RegisterScreen = () => {
 
     try {
       const API_URL = Platform.select({
-        android: 'https://taqamu-backend.vercel.app/api',
-        ios: 'https://taqamu-backend.vercel.app/api',
-        default: 'https://taqamu-backend.vercel.app/api',
+        android: 'https://taqamu-app-backend.vercel.app/api',
+
+        ios: 'https://taqamu-app-backend.vercel.app/api',
+        default: 'https://taqamu-app-backend.vercel.app/api',
       });
 
       const response = await fetch(`${API_URL}/auth/register`, {
@@ -97,7 +98,6 @@ const RegisterScreen = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

@@ -47,9 +47,9 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
         const storedUser = JSON.parse(storedUserString); // convert to object
         console.log(storedUser.id, 'storedUser.id');
         const API_URL = Platform.select({
-          android: 'https://taqamu-backend.vercel.app/api', // For Android emulator
-          ios: 'https://taqamu-backend.vercel.app/api', // For iOS simulator
-          default: 'https://taqamu-backend.vercel.app/api', // For other environments
+          android: 'https://taqamu-app-backend.vercel.app/api', // For Android emulator
+          ios: 'https://taqamu-app-backend.vercel.app/api', // For iOS simulator
+          default: 'https://taqamu-app-backend.vercel.app/api', // For other environments
         });
         const response = await fetch(
           `${API_URL}/auth/get-user/${storedUser.id}`,
@@ -118,6 +118,87 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
     }
   };
 
+  // const calculatePrayerTimes = async () => {
+  //   try {
+  //     const locationCoordinates = await getLocationCoordinates();
+  //     const {latitude, longitude} = locationCoordinates;
+
+  //     const adhanCoordinates = new Coordinates(latitude, longitude);
+  //     const date = new Date();
+  //     // const calculationParams = CalculationMethod.MoonsightingCommittee();
+  //     const calculationParams = CalculationMethod.MoonsightingCommittee();
+  //     const prayerTimes = new adhan.PrayerTimes(
+  //       adhanCoordinates,
+  //       date,
+  //       calculationParams,
+  //     );
+
+  //     const prayers = [
+  //       {
+  //         name: 'Fajr',
+  //         arabicName: PRAYER_ARABIC_NAMES.fajr,
+  //         time: format(prayerTimes.fajr, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //       {
+  //         name: 'Sunrise',
+  //         arabicName: PRAYER_ARABIC_NAMES.sunrise,
+  //         time: format(prayerTimes.sunrise, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //       {
+  //         name: 'Dhuhr',
+  //         arabicName: PRAYER_ARABIC_NAMES.dhuhr,
+  //         time: format(prayerTimes.dhuhr, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //       {
+  //         name: 'Asr',
+  //         arabicName: PRAYER_ARABIC_NAMES.asr,
+  //         time: format(prayerTimes.asr, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //       {
+  //         name: 'Maghrib',
+  //         arabicName: PRAYER_ARABIC_NAMES.maghrib,
+  //         time: format(prayerTimes.maghrib, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //       {
+  //         name: 'Isha',
+  //         arabicName: PRAYER_ARABIC_NAMES.isha,
+  //         time: format(prayerTimes.isha, 'h:mm a'),
+  //         isCurrentPrayer: false,
+  //       },
+  //     ];
+
+  //     const nextPrayerName = prayerTimes.nextPrayer();
+  //     let nextPrayer = null;
+
+  //     prayers.forEach(prayer => {
+  //       const lowerName = prayer.name.toLowerCase();
+
+  //       if (nextPrayerName === lowerName) {
+  //         prayer.isCurrentPrayer = true;
+
+  //         const nextPrayerTime = prayerTimes[lowerName];
+  //         if (nextPrayerTime) {
+  //           prayer.remainingTime = getFormattedRemainingTime(nextPrayerTime);
+  //           nextPrayer = {...prayer};
+  //         }
+  //       }
+  //     });
+
+  //     setAllPrayers(prayers);
+  //     setCurrentPrayer(nextPrayer);
+  //     setLoading(false);
+  //   } catch (err) {
+  //     setError('Failed to calculate prayer times.');
+  //   }
+  // };
+
+  // ✅ Call this only when profile is ready
+
   const calculatePrayerTimes = async () => {
     try {
       const locationCoordinates = await getLocationCoordinates();
@@ -125,12 +206,20 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
 
       const adhanCoordinates = new Coordinates(latitude, longitude);
       const date = new Date();
-      const calculationParams = CalculationMethod.MoonsightingCommittee();
+
+      // Change to Karachi method for Google-compatible times
+      const calculationParams = CalculationMethod.Karachi();
+      calculationParams.madhab = adhan.Madhab.Hanafi;
+
       const prayerTimes = new adhan.PrayerTimes(
         adhanCoordinates,
         date,
         calculationParams,
       );
+
+      // Optional: Adjust times manually if Google time slightly differs (uncomment and edit if needed)
+      // prayerTimes.fajr = addMinutes(prayerTimes.fajr, -2);
+      // prayerTimes.isha = addMinutes(prayerTimes.isha, +1);
 
       const prayers = [
         {
@@ -196,7 +285,6 @@ const PrayerTimesScreen = ({onTogglePrayed}) => {
     }
   };
 
-  // ✅ Call this only when profile is ready
   useEffect(() => {
     if (profile?.city && profile?.country) {
       calculatePrayerTimes();

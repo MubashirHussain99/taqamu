@@ -10,12 +10,8 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {apiRequest} from '../../services/api/queryClient';
-import {api} from '../../services/api/api';
-// import { api } from '../../services/api/api';
 
 const {width} = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -36,9 +32,6 @@ const LoginScreen = () => {
     }
     return null;
   };
-  useEffect(() => {
-    console.log('API:', api); // make sure correct URL aa raha
-  }, []);
 
   const onSubmit = async () => {
     const errorMsg = validateForm();
@@ -53,9 +46,10 @@ const LoginScreen = () => {
     try {
       // Use the correct API URL for your environment
       const API_URL = Platform.select({
-        android: 'https://taqamu-backend.vercel.app/api',
-        ios: 'https://taqamu-backend.vercel.app/api',
-        default: 'https://taqamu-backend.vercel.app/api',
+        android: 'https://taqamu-app-backend.vercel.app/api',
+
+        ios: 'https://taqamu-app-backend.vercel.app/api',
+        default: 'https://taqamu-app-backend.vercel.app/api',
       });
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -71,20 +65,41 @@ const LoginScreen = () => {
       });
 
       // First check if response is HTML (starts with '<')
+      // const responseText = await response.text();
+      // if (responseText.startsWith('<')) {
+      //   throw new Error(
+      //     'Server returned HTML instead of JSON. Check API endpoint.',
+      //   );
+      // }
+      // const data = JSON.parse(responseText);
+      // console.log(data.user, '------data-----');
+
+      // Properly await AsyncStorage operations
+      // await AsyncStorage.setItem('token', data.token);
+      // await AsyncStorage.setItem('user', JSON.stringify(data.user));
+      // // Now parse as JSON
+      // navigation.navigate('Dashboard');
       const responseText = await response.text();
+      console.log('Raw API Response:', responseText); // Log the raw response text
+
+      // Check if the response starts with '<', which may indicate HTML instead of JSON
       if (responseText.startsWith('<')) {
         throw new Error(
           'Server returned HTML instead of JSON. Check API endpoint.',
         );
       }
-      const data = JSON.parse(responseText);
-      console.log(data.user, '------data-----');
 
-      // Properly await AsyncStorage operations
-      await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(data.user));
-      // Now parse as JSON
-      navigation.navigate('Dashboard');
+      const data = JSON.parse(responseText);
+      console.log('Parsed API Data:', data); // Log the parsed response data
+
+      if (data.token && data.user) {
+        await AsyncStorage.setItem('token', data.token);
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
+        navigation.navigate('Dashboard');
+      } else {
+        throw new Error('Invalid response from server');
+      }
+
       setEmail('');
       setPassword('');
     } catch (err) {
@@ -94,6 +109,21 @@ const LoginScreen = () => {
       setIsLoading(false);
     }
   };
+  const removeUserData = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+      console.log('User data removed successfully.');
+    } catch (error) {
+      console.error('Error removing user data:', error);
+    }
+  };
+  const handleLogout = async () => {
+    await removeUserData();
+    // Navigate to Login screen or handle the logout process
+    navigation.navigate('Login');
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
@@ -141,6 +171,10 @@ const LoginScreen = () => {
           <Text style={styles.separatorText}>Don't have an account?</Text>
           <View style={styles.line} />
         </View>
+
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.registerButton}

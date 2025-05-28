@@ -309,9 +309,9 @@ const Dashboard = () => {
           return;
         }
         const API_URL = Platform.select({
-          android: 'https://taqamu-backend.vercel.app/api', // For Android emulator
-          ios: 'https://taqamu-backend.vercel.app/api', // For iOS simulator
-          default: 'https://taqamu-backend.vercel.app/api', // For other environments
+          android: 'https://taqamu-app-backend.vercel.app/api', // For Android emulator
+          ios: 'https://taqamu-app-backend.vercel.app/api', // For iOS simulator
+          default: 'https://taqamu-app-backend.vercel.app/api', // For other environments
         });
 
         const response = await fetch(
