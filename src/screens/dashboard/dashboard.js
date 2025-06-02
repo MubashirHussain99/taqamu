@@ -429,6 +429,46 @@ const Dashboard = () => {
   const handleNext = () => {
     setCurrentIndex(prev => (prev + 1) % hadiths.length);
   };
+
+  function formatCityArea(fullLocation) {
+    if (!fullLocation) return '';
+
+    const parts = fullLocation.split(',').map(p => p.trim());
+
+    // Remove known administrative suffixes
+    const cleanedParts = parts.filter(
+      part =>
+        !/\b(District|Division|County|Province|State|Taluka|City|Region|Ward)\b/i.test(
+          part,
+        ),
+    );
+
+    const area = cleanedParts[0] || '';
+    const city = cleanedParts[1] || '';
+    const country = cleanedParts[cleanedParts.length - 1] || '';
+
+    // Avoid duplicates like "Dublin, Dublin" or "Hyderabad, Hyderabad"
+    const cityPart = area !== city && city ? `${area} ${city}` : area;
+
+    return `${cityPart}, ${country}`;
+  }
+
+  function extractCity(fullLocation) {
+    if (!fullLocation) return '';
+    const parts = fullLocation.split(',').map(p => p.trim());
+    if (parts.length < 2) return fullLocation;
+
+    // The second part is usually the city but might have extra words
+    let city = parts[1];
+
+    // Remove common suffixes like City Taluka, District, Division, City
+    city = city
+      .replace(/\b(City Taluka|Taluka|District|Division|City)\b/gi, '')
+      .trim();
+
+    return city;
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -449,7 +489,9 @@ const Dashboard = () => {
 
           <View style={styles.locationContainer}>
             <Text style={styles.locationText}>
-              {profile?.city.charAt(0).toUpperCase() + profile?.city.slice(1)},{' '}
+              {/* {profile?.city.charAt(0).toUpperCase() + profile?.city.slice(1)},{' '} */}
+              {formatCityArea(profile?.city)},{' '}
+              {/* {profile?.city.charAt(0).toUpperCase() + profile?.city.slice(1)},{' '} */}
               {profile?.country.charAt(0).toUpperCase() +
                 profile?.country.slice(1)}
             </Text>
@@ -486,7 +528,8 @@ const Dashboard = () => {
         {/* <NotificationTester /> */}
         {/* Prayer Times - Implement as separate component */}
         <PrayerTimes
-          city={profile?.city}
+          // city={profile?.city}
+          city={extractCity(profile?.city)}
           country={profile?.country}
           variant="compact"
         />

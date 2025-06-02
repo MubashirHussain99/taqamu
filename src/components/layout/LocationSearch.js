@@ -42,11 +42,21 @@ const LocationSearch = ({onSelect}) => {
 
   const handleSelect = item => {
     const city =
-      item.address?.city || item.address?.town || item.address?.village || '';
+      item.address?.city ||
+      item.address?.town ||
+      item.address?.village ||
+      item.address?.suburb ||
+      item.address?.hamlet ||
+      '';
+
+    const state = item.address?.state || '';
     const country = item.address?.country || '';
-    onSelect({city, country});
-    setQuery(city); // show selected value in input
-    setResults([]); // hide dropdown
+    const full = item.display_name; // "Rathmines, Dublin, Ireland"
+
+    onSelect({full, city, state, country});
+
+    setQuery(full);
+    setResults([]);
   };
 
   return (
@@ -75,7 +85,7 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     borderColor: '#ccc',
-    borderWidth: 1,
+    borderBottomWidth: 1,
     paddingHorizontal: 10,
     borderRadius: 5,
     marginBottom: 5,
