@@ -28,33 +28,33 @@ import {Button} from 'react-native';
 import Charity from '../../components/dashboard/Charity';
 import NotificationTester from '../../components/notification_fix/NotificationTester';
 
-// const todayHijri = new HijriDate(); // This gives you the current Islamic date
-// const hijriDateString = `${todayHijri.getDate()}-${
-//   todayHijri.getMonth() + 1
-// }-${todayHijri.getFullYear()}`;
+const todayHijri = new HijriDate(); // This gives you the current Islamic date
+const hijriDateString = `${todayHijri.getDate()}-${
+  todayHijri.getMonth() + 1
+}-${todayHijri.getFullYear()}`;
 
 // Get today's Islamic date
-const todayHijri = new HijriDate();
+// const todayHijri = new HijriDate();
 
-// Array of month names in Arabic
-const months = [
-  'Muharram',
-  'Safar',
-  'Rabi’ al-Awwal',
-  'Rabi’ al-Thani',
-  'Jumada al-Awwal',
-  'Jumada al-Thani',
-  'Rajab',
-  'Sha’ban',
-  'Ramadan',
-  'Shawwal',
-  'Dhul-Qi’dah',
-  'Dhul-Hijjah',
-];
+// // Array of month names in Arabic
+// const months = [
+//   'Muharram',
+//   'Safar',
+//   'Rabi’ al-Awwal',
+//   'Rabi’ al-Thani',
+//   'Jumada al-Awwal',
+//   'Jumada al-Thani',
+//   'Rajab',
+//   'Sha’ban',
+//   'Ramadan',
+//   'Shawwal',
+//   'Dhul-Qi’dah',
+//   'Dhul-Hijjah',
+// ];
 
-const hijriDateString = `${todayHijri.getDate()} ${
-  months[todayHijri.getMonth()]
-} ${todayHijri.getFullYear()} AH`;
+// const hijriDateString = `${todayHijri.getDate()} ${
+//   months[todayHijri.getMonth()]
+// } ${todayHijri.getFullYear()} AH`;
 
 // Mock data (same as your original)
 const user = {
@@ -489,9 +489,7 @@ const Dashboard = () => {
 
           <View style={styles.locationContainer}>
             <Text style={styles.locationText}>
-              {/* {profile?.city.charAt(0).toUpperCase() + profile?.city.slice(1)},{' '} */}
               {formatCityArea(profile?.city)},{' '}
-              {/* {profile?.city.charAt(0).toUpperCase() + profile?.city.slice(1)},{' '} */}
               {profile?.country.charAt(0).toUpperCase() +
                 profile?.country.slice(1)}
             </Text>
@@ -876,6 +874,8 @@ const styles = StyleSheet.create({
   locationText: {
     color: 'white',
     fontSize: 12,
+    width: '70%',
+    textAlign: 'center',
   },
   editIcon: {
     marginLeft: 4,
