@@ -189,7 +189,7 @@ const EditProfileScreen = ({route}) => {
   }, []);
 
   // API URL (backend)
-  const API_URL = 'http://192.168.18.52:5000/api';
+  const API_URL = 'https://taqamu-backend.vercel.app/api';
 
   const handleUpdate = async () => {
     try {

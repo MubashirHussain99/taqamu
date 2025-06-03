@@ -323,7 +323,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAllAddresses = async () => {
       try {
-        const response = await fetch('http://192.168.18.52:5000/api/address');
+        const response = await fetch('https://taqamu-backend.vercel.app/api/address');
 
         const contentType = response.headers.get('content-type');
         const raw = await response.text();
@@ -377,7 +377,7 @@ const Dashboard = () => {
   useEffect(() => {
     const testPing = async () => {
       try {
-        const response = await fetch('http://192.168.18.52:5000/api/ping');
+        const response = await fetch('https://taqamu-backend.vercel.app/api/ping');
         const json = await response.json();
         console.log('Ping response:', json);
       } catch (err) {
@@ -497,8 +497,6 @@ const Dashboard = () => {
 
     return city;
   }
-  console.log(isUpdated, '123456');
-  console.log(isUpdated, '123456');
 
   return (
     <View style={styles.container}>
