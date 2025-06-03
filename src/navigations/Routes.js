@@ -25,8 +25,8 @@ export default function AppRoutes() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Register" component={Register} />
+      {/* <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} /> */}
       <Stack.Screen name="Dashboard" component={Dashboard} />
       <Stack.Screen name="QiblaDirection" component={QiblaDirection} />
       <Stack.Screen name="PrayersScreen" component={PrayersScreen} />

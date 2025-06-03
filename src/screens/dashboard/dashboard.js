@@ -9,6 +9,7 @@ import {
   Modal,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
@@ -27,6 +28,7 @@ import RootNavigator from '../../components/dashboard/BottomNavigation';
 import {Button} from 'react-native';
 import Charity from '../../components/dashboard/Charity';
 import NotificationTester from '../../components/notification_fix/NotificationTester';
+import AutoLocation from '../../components/dashboard/AutoLocation';
 
 const todayHijri = new HijriDate(); // This gives you the current Islamic date
 const hijriDateString = `${todayHijri.getDate()}-${
@@ -296,51 +298,7 @@ const Dashboard = () => {
   const isTablet = width >= 768;
   const [showCharity, setShowCharity] = useState(false);
   const [profileTrigger, setProfileTrigger] = useState(true);
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const storedUserString = await AsyncStorage.getItem('user');
 
-        const storedUser = JSON.parse(storedUserString); // convert to object
-        console.log(storedUser.id, 'storedUser.id');
-        if (!token) {
-          setError('No token found. Please log in again.');
-          return;
-        }
-        const API_URL = Platform.select({
-          android: 'https://taqamu-app-backend.vercel.app/api', // For Android emulator
-          ios: 'https://taqamu-app-backend.vercel.app/api', // For iOS simulator
-          default: 'https://taqamu-app-backend.vercel.app/api', // For other environments
-        });
-
-        const response = await fetch(
-          `${API_URL}/auth/get-user/${storedUser.id}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        const responseText = await response.text();
-
-        if (responseText.startsWith('<')) {
-          throw new Error('Server returned HTML instead of JSON.');
-        }
-
-        const data = JSON.parse(responseText);
-        setProfile(data);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError('Failed to fetch user profile.');
-      }
-    };
-
-    fetchProfile();
-  }, []);
   useEffect(() => {
     const fetchAuthData = async () => {
       try {
@@ -484,14 +442,14 @@ const Dashboard = () => {
 
         <View style={styles.headerCenter}>
           <Text style={styles.appName}>
-            {profile?.name.charAt(0).toUpperCase() + profile?.name.slice(1)}
+            {/* {profile?.name.charAt(0).toUpperCase() + profile?.name.slice(1)} */}
+            Taqamu
           </Text>
 
           <View style={styles.locationContainer}>
             <Text style={styles.locationText}>
-              {formatCityArea(profile?.city)},{' '}
-              {profile?.country.charAt(0).toUpperCase() +
-                profile?.country.slice(1)}
+              {/* {formatCityArea(city)},{' '} */}
+              {city}, {country?.charAt(0).toUpperCase() + country?.slice(1)}
             </Text>
             <TouchableOpacity
               onPress={() =>
@@ -525,12 +483,24 @@ const Dashboard = () => {
         ]}>
         {/* <NotificationTester /> */}
         {/* Prayer Times - Implement as separate component */}
-        <PrayerTimes
+        {/* <PrayerTimes
           // city={profile?.city}
           city={extractCity(profile?.city)}
           country={profile?.country}
           variant="compact"
+        /> */}
+        <AutoLocation
+          onLocationFound={({city, country}) => {
+            setCity(city);
+            setCountry(country);
+          }}
         />
+
+        {city && country ? (
+          <PrayerTimes city={city} country={country} variant="compact" />
+        ) : (
+          <ActivityIndicator size="large" color="#00ff00" />
+        )}
 
         {/* Feature Icons */}
         <View style={[styles.section, isTablet && styles.sectionTablet]}>
