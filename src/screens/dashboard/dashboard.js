@@ -298,24 +298,95 @@ const Dashboard = () => {
   const isTablet = width >= 768;
   const [showCharity, setShowCharity] = useState(false);
   const [profileTrigger, setProfileTrigger] = useState(true);
+  const [latestAddress, setLatestAddress] = useState(null); // ✅ New state
+  const [isUpdated, setIsUpdated] = useState(false); // false = show auto
+  const [data, setData] = useState(); // false = show auto
 
   useEffect(() => {
-    const fetchAuthData = async () => {
+    const fetchUpdatedFlag = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('token');
-        const storedUser = await AsyncStorage.getItem('user');
-
-        setToken(storedToken);
-        setUserlocal(storedUser ? JSON.parse(storedUser) : null);
-      } catch (error) {
-        console.error('Error fetching token/user from AsyncStorage:', error);
-      } finally {
-        setLoading(false);
+        const updated = await AsyncStorage.getItem('isUpdated');
+        // AsyncStorage stores values as strings, so compare with 'true'
+        if (updated === 'true') {
+          setIsUpdated(true);
+        } else {
+          setIsUpdated(false);
+        }
+      } catch (e) {
+        console.error('Error reading isUpdated flag', e);
       }
     };
 
-    fetchAuthData();
+    fetchUpdatedFlag();
   }, []);
+
+  useEffect(() => {
+    const fetchAllAddresses = async () => {
+      try {
+        const response = await fetch('http://192.168.18.52:5000/api/address');
+
+        const contentType = response.headers.get('content-type');
+        const raw = await response.text();
+        console.log('Raw response:', raw);
+
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Expected JSON but got HTML: ' + raw.slice(0, 100));
+        }
+
+        const addresses = JSON.parse(raw);
+        setData(addresses);
+        if (Array.isArray(addresses) && addresses.length > 0) {
+          // ✅ Set the latest (first one if sorted DESC, or use last index)
+          const last = addresses[0]; // if your SQL uses ORDER BY id DESC
+          // const last = addresses[addresses.length - 1]; // if not sorted
+          setLatestAddress(last);
+        }
+      } catch (err) {
+        console.log('Fetch error:', err.message);
+      }
+    };
+
+    fetchAllAddresses();
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchAllAddresses = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         'http://192.168.18.52:5000/api/address',
+  //       );
+
+  //       const contentType = response.headers.get('content-type');
+  //       const raw = await response.text();
+  //       console.log('Raw response:', raw);
+
+  //       if (!contentType || !contentType.includes('application/json')) {
+  //         throw new Error('Expected JSON but got HTML: ' + raw.slice(0, 100));
+  //       }
+
+  //       const addresses = JSON.parse(raw);
+  //       console.log('Addresses:', addresses);
+  //     } catch (err) {
+  //       console.log('Fetch error:', err.message);
+  //     }
+  //   };
+
+  //   fetchAllAddresses();
+  // }, []);
+
+  useEffect(() => {
+    const testPing = async () => {
+      try {
+        const response = await fetch('http://192.168.18.52:5000/api/ping');
+        const json = await response.json();
+        console.log('Ping response:', json);
+      } catch (err) {
+        console.log('Ping error:', err.message);
+      }
+    };
+    testPing();
+  }, []);
+
   const handleDhikrCountChange = count => {
     setDhikrCount(count);
 
@@ -426,6 +497,8 @@ const Dashboard = () => {
 
     return city;
   }
+  console.log(isUpdated, '123456');
+  console.log(isUpdated, '123456');
 
   return (
     <View style={styles.container}>
@@ -447,21 +520,38 @@ const Dashboard = () => {
           </Text>
 
           <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>
-              {/* {formatCityArea(city)},{' '} */}
+            {isUpdated ? (
+              <Text style={styles.locationText}>
+                {latestAddress.street} {latestAddress?.city},{' '}
+                {latestAddress?.country}
+                {/* Showing DB Address: {city}, {country} */}
+              </Text>
+            ) : (
+              <Text style={styles.locationText}>
+                {/* {formatCityArea(city)},{' '} */}
+                {city}, {country?.charAt(0).toUpperCase() + country?.slice(1)}
+              </Text>
+            )}
+
+            {/* <Text style={styles.locationText}>
               {city}, {country?.charAt(0).toUpperCase() + country?.slice(1)}
-            </Text>
+            </Text> */}
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate('EditProfileScreen', {
                   profile: profile, // the profile data that was fetched
-                  setProfileTrigger: setProfileTrigger, // passing the trigger state function
+                  setProfileTrigger: setProfileTrigger,
+                  setIsUpdated: setIsUpdated, // passing the trigger state function
                 })
               }>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
-
+          {/* {latestAddress ? (
+            <Text>Latest City: {latestAddress.city}</Text>
+          ) : (
+            <Text>Loading latest address...</Text>
+          )} */}
           {/* Islamic Date */}
           <Text style={styles.islamicDate}>
             🕌 Today: {hijriDateString} (Hijri)

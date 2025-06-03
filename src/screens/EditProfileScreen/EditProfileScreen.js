@@ -19,20 +19,36 @@ import LocationSearch from '../../components/layout/LocationSearch'; // Tumhara 
 const RECENT_LOCATIONS_KEY = 'RECENT_LOCATIONS';
 const ITEMS_PER_PAGE = 5;
 
-const EditProfileScreen = () => {
-  // const EditProfileScreen = ({route}) => {
+const EditProfileScreen = ({route}) => {
   const navigation = useNavigation();
-  // const {profile, setProfileTrigger} = route.params;
+  const {profile, setProfileTrigger, setIsUpdated} = route.params;
 
   // const [name, setName] = useState(profile?.name || '');
   // const [email, setEmail] = useState(profile?.email || '');
-  // const [city, setCity] = useState(profile?.city || '');
-  // const [country, setCountry] = useState(profile?.country || '');
+  const [city, setCity] = useState(profile?.city || '');
+  const [country, setCountry] = useState(profile?.country || '');
   const [password, setPassword] = useState('');
   const [locationStatus, setLocationStatus] = useState('');
   const [recentLocations, setRecentLocations] = useState([]);
   const [page, setPage] = useState(1);
   const [loadingLocation, setLoadingLocation] = useState(false);
+
+  const [fullAddress, setFullAddress] = useState('');
+  const [street, setStreet] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+
+  const parseFullAddress = full => {
+    const parts = full.split(',').map(p => p.trim());
+
+    return {
+      street: parts[0] || '',
+      city: parts[2] || '',
+      state: parts[4] || '',
+      zip_code: '', // Optional, can be filled later
+      country: parts[parts.length - 1] || '',
+    };
+  };
 
   const saveLocationToStorage = async location => {
     try {
@@ -94,7 +110,6 @@ const EditProfileScreen = () => {
     }
   };
 
-  // Reverse Geocode coords to address via Nominatim
   const getAddressFromCoords = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -174,62 +189,56 @@ const EditProfileScreen = () => {
   }, []);
 
   // API URL (backend)
-  const API_URL = 'https://taqamu-app-backend.vercel.app/api';
+  const API_URL = 'http://192.168.18.52:5000/api';
 
   const handleUpdate = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-
-      if (!token) {
-        Alert.alert('Error', 'Token not found');
-        return;
-      }
-
-      const updateData = {
-        name,
-        email,
+      const data = {
+        street,
         city,
+        state,
+        zip_code: zipCode,
         country,
-        ...(password ? {password} : {}), // include password only if not empty
+        ...(password ? {password} : {}),
       };
 
-      console.log('Sending update data:', updateData);
+      console.log('Sending update data:', data);
 
-      const response = await fetch(
-        `${API_URL}/auth/update-user/${profile?.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updateData),
+      const response = await fetch(`${API_URL}/address`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify(data),
+      });
 
       const responseText = await response.text();
       console.log('Response:', responseText);
+      setIsUpdated(true);
+      if (!response.ok) {
+        throw new Error(responseText || 'Update failed');
+      }
+      // ✅ Save updated flag to local storage
+      await AsyncStorage.setItem('isUpdated', 'true');
 
       if (city) {
         await saveLocationToStorage(city);
         loadRecentLocations(1);
       }
 
-      if (!response.ok) {
-        throw new Error(responseText || 'Update failed');
-      }
-
-      // Trigger a re-fetch of the profile data
       setProfileTrigger(true);
 
-      Alert.alert('Success', 'Profile updated successfully', [
-        {text: 'OK', onPress: () => navigation.navigate('Dashboard')},
-      ]);
+      // ✅ Navigate to Dashboard on success
+      navigation.navigate('Dashboard'); // <-- Make sure Dashboard is in your navigator
     } catch (err) {
       console.error('Update error:', err.message);
       Alert.alert('Error', err.message);
     }
   };
+
+  console.log(city);
+  console.log('city-country');
+  console.log(country);
 
   return (
     <ScrollView
@@ -247,12 +256,25 @@ const EditProfileScreen = () => {
       <Text style={styles.label}>Location</Text>
 
       {/* LocationSearch component for city input and autocomplete */}
-      <LocationSearch
+      {/* <LocationSearch
         // city={city}
         // country={country}
         onSelect={({full, city: selCity, country: selCountry}) => {
           setCity(full);
           setCountry(selCountry);
+        }}
+      /> */}
+
+      <LocationSearch
+        onSelect={({full, city: selCity, country: selCountry}) => {
+          setFullAddress(full);
+          setCity(selCity);
+          setCountry(selCountry);
+
+          const parsed = parseFullAddress(full);
+          setStreet(parsed.street);
+          setState(parsed.state);
+          setZipCode(parsed.zip_code);
         }}
       />
 
