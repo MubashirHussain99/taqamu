@@ -74,8 +74,8 @@ const EditProfileScreen = ({route}) => {
     try {
       const storedLocations = await AsyncStorage.getItem(RECENT_LOCATIONS_KEY);
       let locations = storedLocations ? JSON.parse(storedLocations) : [];
-
-      const pagedLocations = locations.slice(0, pageNum * ITEMS_PER_PAGE);
+      console.log(locations, '------locations----');
+      const pagedLocations = locations.slice(1, pageNum * ITEMS_PER_PAGE);
       setRecentLocations(pagedLocations);
       setPage(pageNum);
     } catch (err) {
@@ -133,20 +133,30 @@ const EditProfileScreen = ({route}) => {
       return null;
     }
   };
+  // const formatLocationName = addr => {
+  //   if (!addr) return '';
+  //   const parts = [];
+
+  //   if (addr.city) parts.push(addr.city);
+  //   else if (addr.town) parts.push(addr.town);
+  //   else if (addr.village) parts.push(addr.village);
+  //   else if (addr.neighbourhood) parts.push(addr.neighbourhood);
+
+  //   if (addr.state) parts.push(addr.state);
+
+  //   if (addr.country) parts.push(addr.country);
+
+  //   return parts.join(', ');
+  // };
   const formatLocationName = addr => {
     if (!addr) return '';
-    const parts = [];
 
-    if (addr.city) parts.push(addr.city);
-    else if (addr.town) parts.push(addr.town);
-    else if (addr.village) parts.push(addr.village);
-    else if (addr.neighbourhood) parts.push(addr.neighbourhood);
+    if (addr.city) return addr.city;
+    if (addr.town) return addr.town;
+    if (addr.village) return addr.village;
+    if (addr.neighbourhood) return addr.neighbourhood;
 
-    if (addr.state) parts.push(addr.state);
-
-    if (addr.country) parts.push(addr.country);
-
-    return parts.join(', ');
+    return ''; // fallback if none available
   };
 
   const getLocation = () => {
@@ -257,8 +267,8 @@ const EditProfileScreen = ({route}) => {
 
       {/* LocationSearch component for city input and autocomplete */}
       {/* <LocationSearch
-        // city={city}
-        // country={country}
+        city={city}
+        country={country}
         onSelect={({full, city: selCity, country: selCountry}) => {
           setCity(full);
           setCountry(selCountry);
@@ -266,6 +276,8 @@ const EditProfileScreen = ({route}) => {
       /> */}
 
       <LocationSearch
+        city={city}
+        country={country}
         onSelect={({full, city: selCity, country: selCountry}) => {
           setFullAddress(full);
           setCity(selCity);
@@ -303,9 +315,24 @@ const EditProfileScreen = ({route}) => {
           <Text style={styles.noRecent}>No recent locations found.</Text>
         )}
         {recentLocations.map((loc, idx) => (
-          <Text key={idx} style={styles.recentItem}>
-            {loc}
-          </Text>
+          <>
+            <TouchableOpacity
+              onPress={() => {
+                const parts = loc.split(',');
+                const city = parts[0]?.trim() || '';
+                const country = parts.slice(1).join(',').trim() || '';
+
+                setCity(city);
+                setCountry(country);
+                setFullAddress(loc); // optional
+                loadRecentLocations(page + 1);
+              }}>
+              <Text key={idx} style={styles.recentItem}>
+                {loc}
+              </Text>
+            </TouchableOpacity>
+            F
+          </>
         ))}
 
         {recentLocations.length >= page * ITEMS_PER_PAGE && (

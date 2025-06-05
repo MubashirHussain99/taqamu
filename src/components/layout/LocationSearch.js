@@ -1,4 +1,3 @@
-
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -10,12 +9,19 @@ import {
 } from 'react-native';
 import axios from 'axios';
 
-const LocationSearch = ({onSelect, city, country}) => {
+const LocationSearch = ({onSelect, city, country, selCountry, selCity}) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [manuallyTyped, setManuallyTyped] = useState(false);
 
   // Set initial value from props
+  useEffect(() => {
+    if (selCity && selCountry) {
+      const full = `${selCity}, ${selCountry}`;
+      setQuery(full);
+    }
+  }, [selCity, selCountry]);
+
   useEffect(() => {
     if (city && country) {
       const full = `${city}, ${country}`;

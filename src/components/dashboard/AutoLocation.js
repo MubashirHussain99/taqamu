@@ -13,7 +13,8 @@ const AutoLocation = ({onLocationFound}) => {
   const [locationFetched, setLocationFetched] = useState(false);
 
   useEffect(() => {
-    let alertTimeout;
+    let gpsAlertShown = false; // 👈 Alert flag (only once per app session)
+    let alertTimeout = null;
 
     const requestPermissionAndFetchLocation = async () => {
       if (Platform.OS === 'android') {
@@ -29,7 +30,10 @@ const AutoLocation = ({onLocationFound}) => {
           );
 
           if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert('Permission Denied', 'Location permission is required.');
+            Alert.alert(
+              'Permission Denied',
+              'Location permission is required.',
+            );
             setLoading(false);
             return;
           }
@@ -42,14 +46,15 @@ const AutoLocation = ({onLocationFound}) => {
 
       getLocation();
 
-      alertTimeout = setTimeout(() => {
-        if (!locationFetched) {
-          Alert.alert(
-            'Location not enabled?',
-            'Please make sure your device location (GPS) is turned ON.',
-          );
-        }
-      }, 6000);
+      // alertTimeout = setTimeout(() => {
+      //   if (!locationFetched && !gpsAlertShown) {
+      //     Alert.alert(
+      //       'Location not enabled?',
+      //       'Please make sure your device location (GPS) is turned ON.',
+      //     );
+      //     gpsAlertShown = true;
+      //   }
+      // }, 6000);
     };
 
     const getLocation = () => {
@@ -73,13 +78,19 @@ const AutoLocation = ({onLocationFound}) => {
             if (data?.address) {
               const addr = data.address;
               const formattedCity =
-                addr.city || addr.town || addr.village || addr.neighbourhood || '';
+                addr.city ||
+                addr.town ||
+                addr.village ||
+                addr.neighbourhood ||
+                '';
               const country = addr.country || '';
 
               onLocationFound({
                 city: formattedCity,
                 country: country,
-                full: [formattedCity, addr.state, country].filter(Boolean).join(', '),
+                full: [formattedCity, addr.state, country]
+                  .filter(Boolean)
+                  .join(', '),
               });
             }
           } catch (err) {

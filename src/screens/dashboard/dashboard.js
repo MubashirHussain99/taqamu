@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
@@ -29,6 +30,12 @@ import {Button} from 'react-native';
 import Charity from '../../components/dashboard/Charity';
 import NotificationTester from '../../components/notification_fix/NotificationTester';
 import AutoLocation from '../../components/dashboard/AutoLocation';
+import cityTimezones from 'city-timezones';
+import countries from 'i18n-iso-countries';
+import moment from 'moment-timezone';
+import countryCodes from '../../components/layout/countryCodes';
+
+countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 const todayHijri = new HijriDate(); // This gives you the current Islamic date
 const hijriDateString = `${todayHijri.getDate()}-${
@@ -323,11 +330,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAllAddresses = async () => {
       try {
-        const response = await fetch('https://taqamu-backend.vercel.app/api/address');
+        const response = await fetch(
+          'https://taqamu-backend.vercel.app/api/address',
+        );
 
         const contentType = response.headers.get('content-type');
         const raw = await response.text();
-        console.log('Raw response:', raw);
 
         if (!contentType || !contentType.includes('application/json')) {
           throw new Error('Expected JSON but got HTML: ' + raw.slice(0, 100));
@@ -377,7 +385,9 @@ const Dashboard = () => {
   useEffect(() => {
     const testPing = async () => {
       try {
-        const response = await fetch('https://taqamu-backend.vercel.app/api/ping');
+        const response = await fetch(
+          'https://taqamu-backend.vercel.app/api/ping',
+        );
         const json = await response.json();
         console.log('Ping response:', json);
       } catch (err) {
@@ -498,6 +508,78 @@ const Dashboard = () => {
     return city;
   }
 
+  const getLocalTimeFromCity = (cityName, countryCode = '') => {
+    if (!cityName) return 'City not provided';
+
+    // Clean city name by removing common suffixes
+    const cleanedCityName = cityName
+      .replace(/ division| district| city| province/gi, '') // Remove common suffixes
+      .trim();
+
+    const cityLookup = cityTimezones.lookupViaCity(cleanedCityName);
+
+    let cityData = cityLookup;
+    if (countryCode) {
+      cityData = cityLookup.filter(
+        city => city.iso2 === countryCode.toUpperCase(),
+      );
+    }
+
+    if (cityData.length === 0) {
+      return 'City not found';
+    }
+
+    const timezone = cityData[0].timezone;
+    const localTime = moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss');
+
+    return localTime;
+  };
+
+  const toCamelCase = str => {
+    return str
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
+  };
+
+  // const convertCountryToISO2 = countryName => {
+  //   const map = countryCodes;
+  //   if (!countryName) return '';
+  //   return map[countryName] || countryName;
+  // };
+  const convertCountryToISO2 = countryName => {
+    if (!countryName) return '';
+    const key = toCamelCase(countryName);
+    return countryCodes[key] || countryName;
+  };
+
+  // Get active city and country based on isUpdated
+  const activeCity = isUpdated ? latestAddress?.city : city;
+  const activeCountry = isUpdated ? latestAddress?.country : country;
+
+  const iso2 = convertCountryToISO2(activeCountry);
+  console.log(iso2, 'ISO2 code');
+
+  const [localTime, setLocalTime] = useState('');
+
+  const getLocalTime = () => {
+    if (!activeCity) return 'City not provided';
+    // Use your existing getLocalTimeFromCity logic here, but for demo:
+    // (Assuming getLocalTimeFromCity returns current time string for given city/country)
+    return getLocalTimeFromCity(activeCity, iso2);
+  };
+
+  // useEffect to update localTime every second
+  useEffect(() => {
+    // Initialize immediately
+    setLocalTime(getLocalTime());
+
+    const interval = setInterval(() => {
+      setLocalTime(getLocalTime());
+    }, 1000); // update every 1 second
+
+    return () => clearInterval(interval); // cleanup on unmount or dependency change
+  }, [activeCity, iso2]);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -520,13 +602,11 @@ const Dashboard = () => {
           <View style={styles.locationContainer}>
             {isUpdated ? (
               <Text style={styles.locationText}>
-                {latestAddress.street} {latestAddress?.city},{' '}
+                {latestAddress?.street} {latestAddress?.city},{' '}
                 {latestAddress?.country}
-                {/* Showing DB Address: {city}, {country} */}
               </Text>
             ) : (
               <Text style={styles.locationText}>
-                {/* {formatCityArea(city)},{' '} */}
                 {city}, {country?.charAt(0).toUpperCase() + country?.slice(1)}
               </Text>
             )}
@@ -577,17 +657,40 @@ const Dashboard = () => {
           country={profile?.country}
           variant="compact"
         /> */}
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 6,
+          }}>
+          <Text style={styles.islamicDate}>Local Time & Date:</Text>
+          <Text style={styles.islamicDate}>{localTime}</Text>
+        </View>
         <AutoLocation
           onLocationFound={({city, country}) => {
+            console.log('City:', city);
+            console.log('Country:', country);
             setCity(city);
             setCountry(country);
           }}
         />
 
-        {city && country ? (
-          <PrayerTimes city={city} country={country} variant="compact" />
+        {isUpdated ? (
+          <PrayerTimes
+            city={latestAddress?.city}
+            country={latestAddress?.country}
+            variant="compact"
+            localTime={localTime}
+          />
         ) : (
-          <ActivityIndicator size="large" color="#00ff00" />
+          <PrayerTimes
+            city={city}
+            country={country}
+            variant="compact"
+            localTime={localTime}
+          />
         )}
 
         {/* Feature Icons */}
