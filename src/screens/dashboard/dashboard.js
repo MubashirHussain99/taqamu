@@ -557,7 +557,6 @@ const Dashboard = () => {
   const activeCountry = isUpdated ? latestAddress?.country : country;
 
   const iso2 = convertCountryToISO2(activeCountry);
-  console.log(iso2, 'ISO2 code');
 
   const [localTime, setLocalTime] = useState('');
 

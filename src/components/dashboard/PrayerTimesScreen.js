@@ -18,6 +18,7 @@ const PrayerTimesScreen = ({route, navigation}) => {
     selectedDate,
     prayerCompletionState,
     onTogglePrayed,
+    localTime,
   } = route.params; // prayers props passed from previous screen
   const today = new Date();
   const [modalVisible, setModalVisible] = useState(true); // State for modal visibility
@@ -26,6 +27,8 @@ const PrayerTimesScreen = ({route, navigation}) => {
   const handleBack = () => {
     navigation.goBack();
   };
+
+  console.log(localTime, '');
 
   return (
     <Modal
@@ -49,10 +52,6 @@ const PrayerTimesScreen = ({route, navigation}) => {
             {format(today, 'eeee, MMM d, yyyy')}
           </Text>
         </View>
-        {/* <View style={styles.calendarContainer}>
-          <Text style={styles.calendarLabel}>Local Time Zone</Text>
-          <Text style={styles.calendarDate}>{localTime}</Text>
-        </View> */}
 
         <ScrollView style={styles.container1}>
           <Text style={styles.title}>Prayer Times</Text>
