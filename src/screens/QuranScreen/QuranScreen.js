@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,12 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  // I18nManager,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RootNavigator from '../../components/dashboard/BottomNavigation';
-import quranData from '../../components/quran/quran.json';  // import your local JSON file
-
+import quranData from '../../components/quran/quran.json'; // import your local JSON file
+// I18nManager.forceRTL(true);
 const QuranScreen = () => {
   const navigation = useNavigation();
 
@@ -26,7 +27,7 @@ const QuranScreen = () => {
   }, []);
 
   const loadSurahs = () => {
-    setSurahs(quranData);  // Directly set the data from your local JSON file
+    setSurahs(quranData); // Directly set the data from your local JSON file
     setLoading(false);
   };
 
@@ -41,18 +42,33 @@ const QuranScreen = () => {
 
   const toggleRead = async (surahNum, ayahNum) => {
     const key = `${surahNum}-${ayahNum}`;
-    const newReadAyahs = { ...readAyahs, [key]: !readAyahs[key] };
+    const newReadAyahs = {...readAyahs, [key]: !readAyahs[key]};
     setReadAyahs(newReadAyahs);
     await AsyncStorage.setItem('readAyahs', JSON.stringify(newReadAyahs));
   };
 
-  const onSurahPress = (surahNumber) => {
+  // useEffect(() => {
+  //   if (!I18nManager.isRTL) {
+  //     I18nManager.forceRTL(true);
+  //     // Inform user to restart app after this change
+  //   }
+  // }, []);
+
+  const onSurahPress = surahNumber => {
     if (expandedSurah === surahNumber) {
       setExpandedSurah(null);
     } else {
       setExpandedSurah(surahNumber);
     }
   };
+
+  const fonts = [
+    'ScheherazadeNew-Regular',
+    'ScheherazadeNew',
+    'Scheherazade New',
+    'Scheherazade',
+    'Amiri-Regular', // if you're testing other fonts too
+  ];
 
   if (loading) {
     return (
@@ -66,13 +82,13 @@ const QuranScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={{ fontSize: 24 }}>❌</Text>
+          <Text style={{fontSize: 24}}>❌</Text>
         </TouchableOpacity>
         <Text style={styles.title}>القرآن الكريم</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {surahs.map((surah) => (
+        {surahs.map(surah => (
           <View key={surah.id} style={styles.surahContainer}>
             <TouchableOpacity onPress={() => onSurahPress(surah.id)}>
               <Text style={styles.surahName}>
@@ -86,13 +102,15 @@ const QuranScreen = () => {
 
             {expandedSurah === surah.id && surah.verses && (
               <View style={styles.versesContainer}>
-                {surah.verses.map((ayah) => {
+                {surah.verses.map(ayah => {
                   const key = `${surah.id}-${ayah.id}`;
                   const isRead = readAyahs[key] || false;
                   return (
-                    <View key={key} style={{ marginBottom: 12 }}>
-                      <TouchableOpacity onPress={() => toggleRead(surah.id, ayah.id)}>
-                        <Text style={[styles.ayahText, isRead && styles.readAyah]}>
+                    <View key={key} style={{marginBottom: 12}}>
+                      <TouchableOpacity
+                        onPress={() => toggleRead(surah.id, ayah.id)}>
+                        <Text
+                          style={[styles.ayahText, isRead && styles.readAyah]}>
                           {ayah.id}. {ayah.text}
                         </Text>
                         <Text style={[styles.translationText]}>
@@ -167,9 +185,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   ayahText: {
-    fontSize: 16,
-    color: '#34495e',
+    // fontSize: 32,
+    //
+    // textAlign: 'right',
+    // fontFamily: 'ScheherazadeNew-Regular', // Font ka correct name
+    fontSize: 28,
     textAlign: 'right',
+    // fontFamily: 'ScheherazadeNew-Regular', // IMPORTANT: Match font name!
+    fontFamily: 'Al Majeed Quranic Font_shiped',
+    color: '#34495e',
+    lineHeight: 50,
   },
   translationText: {
     fontSize: 14,

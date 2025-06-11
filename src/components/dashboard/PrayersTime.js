@@ -2030,7 +2030,7 @@ const styles = StyleSheet.create({
     color: '#f87171',
   },
   compactContainer: {
-    flexDirection: 'column',
+    // flexDirection: 'column-reverse',
     gap: 12,
   },
   compactGrid: {
@@ -2071,6 +2071,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 6,
   },
   compactTime: {
     fontSize: 18,

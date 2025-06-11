@@ -309,6 +309,32 @@ const Dashboard = () => {
   const [isUpdated, setIsUpdated] = useState(false); // false = show auto
   const [data, setData] = useState(); // false = show auto
 
+  const [hadiths, setHadiths] = useState([]);
+  const [metadata, setMetadata] = useState(null);
+  const [currentIndex1, setCurrentIndex1] = useState(0);
+
+  useEffect(() => {
+    fetch(
+      'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari.json',
+    )
+      .then(response => response.json())
+      .then(data => {
+        setHadiths(data.hadiths);
+        setMetadata(data.metadata);
+      })
+      .catch(error => console.error(error));
+  }, []);
+
+  const handleNext1 = () => {
+    setCurrentIndex1(prevIndex => {
+      const nextIndex = prevIndex + 1;
+      return nextIndex < hadiths.length ? nextIndex : 0; // loop to start
+    });
+  };
+
+  // Make sure currentHadith exists before accessing its properties
+  const currentHadith = hadiths.length > 0 ? hadiths[currentIndex1] : null;
+
   useEffect(() => {
     const fetchUpdatedFlag = async () => {
       try {
@@ -829,7 +855,7 @@ const Dashboard = () => {
             visible={showCharity}
             onClose={() => setShowCharity(false)}
           /> */}
-          <Charity
+          {/* <Charity
             visible={showCharity}
             onClose={() => setShowCharity(false)}
             hadithText={hadiths[currentIndex].hadithText}
@@ -837,7 +863,7 @@ const Dashboard = () => {
             source={hadiths[currentIndex].source}
             variant="dark"
             onShare={() => console.log('Hadith shared')}
-          />
+          /> */}
 
           {/* Implement CharityCampaign component */}
           <CharityCampaign
@@ -872,7 +898,7 @@ const Dashboard = () => {
           onShare={() => console.log("Hadith shared")}
         /> */}
 
-        <ScrollView>
+        {/* <ScrollView>
           <HadithOfTheDay
             hadithText={hadiths[currentIndex].hadithText}
             narrator={hadiths[currentIndex].narrator}
@@ -881,11 +907,38 @@ const Dashboard = () => {
             onShare={() => console.log('Hadith shared')}
           />
           <View style={{margin: 20}}>
-            {/* <Button title="Next Hadith" onPress={handleNext} /> */}
             <TouchableOpacity style={{width: '100%'}} onPress={handleNext}>
               <Text
                 style={{
                   color: '#f59e0b', // amber-500 equivalent
+                  fontSize: 14,
+                  fontWeight: '500',
+                  textAlign: 'right',
+                }}>
+                Next Hadith
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView> */}
+
+        <ScrollView>
+          {currentHadith ? (
+            <HadithOfTheDay
+              hadithText={currentHadith.text}
+              narrator={currentHadith.narrator || 'Unknown'}
+              source={metadata?.name || 'Sahih Bukhari'}
+              hadithNumber={currentHadith.hadithNumber}
+              bookName={currentHadith.bookName || 'Bukhari'}
+            />
+          ) : (
+            <Text>Loading Hadith...</Text>
+          )}
+
+          <View style={{margin: 20}}>
+            <TouchableOpacity style={{width: '100%'}} onPress={handleNext1}>
+              <Text
+                style={{
+                  color: '#f59e0b',
                   fontSize: 14,
                   fontWeight: '500',
                   textAlign: 'right',
@@ -1087,6 +1140,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '500',
     color: 'white',
+    paddingTop: 10,
   },
   viewAll: {
     color: '#f59e0b', // amber-500 equivalent
@@ -1148,7 +1202,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   goalsGrid: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
@@ -1163,9 +1217,11 @@ const styles = StyleSheet.create({
     borderColor: '#334155', // slate-700 equivalent
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
+    textAlign: 'left',
+    gap: 10,
   },
   goalCardCompleted: {
     borderColor: '#10b981', // green-500 equivalent
@@ -1188,8 +1244,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   dhikrContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
     gap: 16,
+    justifyContent: 'flex-start',
   },
   dhikrContainerTablet: {
     gap: 24,
@@ -1202,6 +1260,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     width: '50%',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   streakCardTablet: {
     padding: 20,
