@@ -55,18 +55,44 @@ const CharityCampaign = ({
   );
 
   const renderFull = () => (
-    <TouchableOpacity
-      onPress={() =>
-        navigation.navigate('Donate', {
-          title,
-        })
-      }
+    <View
+      // onPress={() =>
+      //   navigation.navigate('Donate', {
+      //     title,
+      //   })
+      // }
       style={styles.fullContainer}>
       <View style={styles.rowBetween}>
         <View style={styles.row}>
           {renderImage(56)}
           <View style={{marginLeft: 12}}>
-            <Text style={styles.title}>{title}</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                // backgroundColor: 'pink',
+                width: '87%',
+              }}>
+              <Text style={styles.titleSmall}>{title}</Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#f59e0b',
+                  paddingLeft: 12,
+                  paddingRight: 12,
+                  paddingBottom:6,
+                  paddingTop:6,
+                  borderRadius: 6,
+                }}
+                onPress={() =>
+                  navigation.navigate('Donate', {
+                    title,
+                  })
+                }>
+                <Text style={styles.titleSmall}>Donate</Text>
+              </TouchableOpacity>
+            </View>
+            {/* <Text style={styles.title}>{title}</Text> */}
             <Text style={styles.fundedText}>{fundedPercentage}% funded</Text>
             <View style={{marginTop: 6}}>
               <ProgressBar
@@ -84,7 +110,7 @@ const CharityCampaign = ({
           </TouchableOpacity>
         )} */}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   const renderCard = () => (
