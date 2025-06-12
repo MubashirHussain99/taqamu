@@ -17,7 +17,7 @@ const DailyHadith = ({hadithText, narrator, source, hadithNumber, bookName}) => 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e293b',
     borderRadius: 10,
     margin: 10,
     shadowColor: '#000',
@@ -29,14 +29,15 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 16,
     marginBottom: 10,
+    color: '#fff',
   },
   meta: {
     fontSize: 14,
-    color: '#555',
+    color: '#fff',
   },
   source: {
     fontSize: 12,
-    color: '#777',
+    color: '#fff',
   },
 });
 

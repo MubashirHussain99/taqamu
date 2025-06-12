@@ -17,37 +17,42 @@ import PrayerTimesScreen from '../components/dashboard/PrayerTimesScreen';
 import Notifications from '../screens/Notifications/Notifications';
 import UmmahApp from '../screens/UmmahApp/UmmahApp';
 import EditProfileScreen from '../screens/EditProfileScreen/EditProfileScreen';
+import DonateScreen from '../screens/DonateScreen/DonateScreen';
 import NearbyMosquesScreen from '../screens/NearbyMosquesScreen/NearbyMosquesScreen';
+import {StripeProvider} from '@stripe/stripe-react-native';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppRoutes() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      {/* <Stack.Screen name="Login" component={Login} />
+    <StripeProvider publishableKey="pk_test_51QxTNxB4BcVhkjmMXaTzSlygOYPTPqJakEoMI7LikoRMd45kLdjps9f8u43fGpZ8fwdN1px60NctiVDFOvQcKh5j00zRp5eXwV">
+      <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        {/* <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} /> */}
-      <Stack.Screen name="Dashboard" component={Dashboard} />
-      <Stack.Screen name="QiblaDirection" component={QiblaDirection} />
-      <Stack.Screen name="PrayersScreen" component={PrayersScreen} />
-      <Stack.Screen name="QuranScreen" component={QuranScreen} />
-      <Stack.Screen name="UmmahScreen" component={UmmahScreen} />
-      <Stack.Screen name="Duas" component={DuaScreen} />
-      <Stack.Screen name="Tasbih" component={Tasbih} />
-      <Stack.Screen name="Zakat" component={ZakatScreen} />
-      <Stack.Screen
-        name="QuestionDetailScreen"
-        component={QuestionDetailScreen}
-      />
-      <Stack.Screen name="Ummah" component={UmmahDonationScreen} />
-      <Stack.Screen name="PrayerTimesScreen" component={PrayerTimesScreen} />
-      <Stack.Screen name="Notifications" component={Notifications} />
-      <Stack.Screen name="UmmahApp" component={UmmahApp} />
-      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
-      <Stack.Screen
-        name="NearbyMosquesScreen"
-        component={NearbyMosquesScreen}
-      />
-    </Stack.Navigator>
+        <Stack.Screen name="Dashboard" component={Dashboard} />
+        <Stack.Screen name="QiblaDirection" component={QiblaDirection} />
+        <Stack.Screen name="PrayersScreen" component={PrayersScreen} />
+        <Stack.Screen name="QuranScreen" component={QuranScreen} />
+        <Stack.Screen name="UmmahScreen" component={UmmahScreen} />
+        <Stack.Screen name="Duas" component={DuaScreen} />
+        <Stack.Screen name="Tasbih" component={Tasbih} />
+        <Stack.Screen name="Zakat" component={ZakatScreen} />
+        <Stack.Screen
+          name="QuestionDetailScreen"
+          component={QuestionDetailScreen}
+        />
+        <Stack.Screen name="Ummah" component={UmmahDonationScreen} />
+        <Stack.Screen name="PrayerTimesScreen" component={PrayerTimesScreen} />
+        <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="UmmahApp" component={UmmahApp} />
+        <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+        <Stack.Screen
+          name="NearbyMosquesScreen"
+          component={NearbyMosquesScreen}
+        />
+        <Stack.Screen name="Donate" component={DonateScreen} />
+      </Stack.Navigator>
+    </StripeProvider>
   );
 }

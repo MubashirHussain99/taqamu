@@ -1,5 +1,6 @@
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import ProgressBar from 'react-native-progress/Bar';
 
 const CharityCampaign = ({
@@ -9,46 +10,71 @@ const CharityCampaign = ({
   variant = 'card',
   onDonate,
 }) => {
-
-  const renderImage = (size) => (
+  const navigation = useNavigation();
+  const renderImage = size =>
     imagePath ? (
       <Image
-        source={{ uri: imagePath }}
-        style={{ width: size, height: size, borderRadius: 8 }}
+        source={{uri: imagePath}}
+        style={{width: size, height: size, borderRadius: 8}}
         resizeMode="cover"
       />
     ) : (
-      <View style={[styles.placeholder, { width: size, height: size, borderRadius: 8 }]}>
+      <View
+        style={[
+          styles.placeholder,
+          {width: size, height: size, borderRadius: 8},
+        ]}>
         <Text style={styles.heartIcon}>❤️</Text>
       </View>
-    )
-  );
+    );
 
   const renderCompact = () => (
-    <View style={styles.compactContainer}>
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate('Donate', {
+          title,
+        })
+      }
+      style={styles.compactContainer}>
       <View style={styles.row}>
         {renderImage(40)}
         <View style={styles.flexGrow}>
           <Text style={styles.titleSmall}>{title}</Text>
           <View style={styles.progressBar}>
-            <ProgressBar progress={fundedPercentage / 100} width={null} height={4} color="#f59e0b" />
+            <ProgressBar
+              progress={fundedPercentage / 100}
+              width={null}
+              height={4}
+              color="#f59e0b"
+            />
           </View>
           <Text style={styles.fundedTextSmall}>{fundedPercentage}% funded</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderFull = () => (
-    <View style={styles.fullContainer}>
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate('Donate', {
+          title,
+        })
+      }
+      style={styles.fullContainer}>
       <View style={styles.rowBetween}>
         <View style={styles.row}>
           {renderImage(56)}
-          <View style={{ marginLeft: 12 }}>
+          <View style={{marginLeft: 12}}>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.fundedText}>{fundedPercentage}% funded</Text>
-            <View style={{ marginTop: 6 }}>
-              <ProgressBar progress={fundedPercentage / 100} width={200} height={4} color="#f59e0b" />
+            <View style={{marginTop: 6}}>
+              <ProgressBar
+                progress={fundedPercentage / 100}
+                width={200}
+                height={4}
+                color="#f59e0b"
+              />
             </View>
           </View>
         </View>
@@ -58,7 +84,7 @@ const CharityCampaign = ({
           </TouchableOpacity>
         )} */}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderCard = () => (
@@ -67,7 +93,12 @@ const CharityCampaign = ({
       <View style={styles.cardContent}>
         <Text style={styles.titleSmall}>{title}</Text>
         <View style={styles.progressBar}>
-          <ProgressBar progress={fundedPercentage / 100} width={null} height={4} color="#f59e0b" />
+          <ProgressBar
+            progress={fundedPercentage / 100}
+            width={null}
+            height={4}
+            color="#f59e0b"
+          />
         </View>
         <View style={styles.rowBetween}>
           <Text style={styles.fundedTextSmall}>{fundedPercentage}% funded</Text>
@@ -103,7 +134,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 10,
-    width:"100%",
+    width: '100%',
   },
   cardContainer: {
     backgroundColor: '#1e293b',
@@ -111,73 +142,73 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 10
+    marginBottom: 10,
   },
   cardContent: {
-    padding: 12
+    padding: 12,
   },
   placeholder: {
     backgroundColor: '#334155',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   heartIcon: {
     fontSize: 20,
-    color: '#f59e0b'
+    color: '#f59e0b',
   },
   title: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   titleSmall: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   fundedText: {
     color: '#cbd5e1',
     fontSize: 12,
-    marginTop: 4
+    marginTop: 4,
   },
   fundedTextSmall: {
     color: '#94a3b8',
     fontSize: 11,
-    marginTop: 4
+    marginTop: 4,
   },
   progressBar: {
-    marginTop: 4
+    marginTop: 4,
   },
   donateButton: {
     backgroundColor: '#f59e0b',
     paddingHorizontal: 6,
     paddingVertical: 6,
-    borderRadius: 8
+    borderRadius: 8,
   },
   donateButtonText: {
     color: '#0f172a',
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   donateLink: {
     color: '#f59e0b',
     fontSize: 12,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width:"100%",
+    width: '100%',
   },
   flexGrow: {
     flex: 1,
-    marginLeft: 12
-  }
+    marginLeft: 12,
+  },
 });
 
 export default CharityCampaign;

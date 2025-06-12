@@ -1,8 +1,9 @@
-import React from 'react';
-import { ScrollView, Text, StyleSheet, Linking,TouchableOpacity } from 'react-native';
-// import { TouchableOpacity } from 'react-native-gesture-handler';
+import React, { useState } from 'react';
+import { ScrollView, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 const ZakatInfoScreen = () => {
+  const [showMore, setShowMore] = useState(false);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>About Zakat</Text>
@@ -32,13 +33,28 @@ const ZakatInfoScreen = () => {
         {'\n'}7. In the cause of Allah
         {'\n'}8. The wayfarer
       </Text>
-      
+
+      {/* Button to toggle more details */}
       <TouchableOpacity 
         style={styles.linkButton}
-        onPress={() => Linking.openURL('https://islamic-relief.org/zakat/')}
+        onPress={() => setShowMore(!showMore)}
       >
-        <Text style={styles.linkText}>Learn More About Zakat</Text>
+        <Text style={styles.linkText}>
+          {showMore ? 'Hide Details' : 'Learn More About Zakat'}
+        </Text>
       </TouchableOpacity>
+
+      {/* Conditional rendering of detailed content */}
+      {showMore && (
+        <Text style={styles.text}>
+          {'\n'}Zakat is not just a charity—it’s a means of redistributing wealth and maintaining social justice.
+          {'\n\n'}📌 **Key Additional Details:**
+          {'\n'}• Nisab is roughly equal to the value of 87.48 grams of gold or 612.36 grams of silver.
+          {'\n'}• Zakat is calculated after subtracting immediate debts and essential needs.
+          {'\n'}• You can give Zakat directly to recipients or through trusted organizations.
+          {'\n\n'}💡 Tip: Keep a Zakat journal to track your assets, liabilities, and annual due dates.
+        </Text>
+      )}
     </ScrollView>
   );
 };
