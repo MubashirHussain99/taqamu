@@ -847,8 +847,8 @@ const Dashboard = () => {
         <View style={[styles.section, isTablet && styles.sectionTablet]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Charity</Text>
-            <TouchableOpacity onPress={() => setShowCharity(true)}>
-              <Text style={styles.viewAll}>View All →</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Donate')}>
+              <Text style={styles.viewAll}>Donate with love</Text>
             </TouchableOpacity>
           </View>
           {/* <Charity
