@@ -1602,11 +1602,27 @@ const PrayerTime = ({
     }
     return `${minutes} min`;
   };
+  // const getCalculationParams = () => {
+  //   const params = CalculationMethod.MuslimWorldLeague();
+  //   params.highLatitudeRule = HighLatitudeRule.TwilightAngle; // ✅
+  //   params.madhab = Madhab.Shafi; // ✅
+  //   params.adjustments = {fajr: 8, isha: -40};
+  //   return params;
+  // };
   const getCalculationParams = () => {
     const params = CalculationMethod.MuslimWorldLeague();
-    params.highLatitudeRule = HighLatitudeRule.TwilightAngle; // ✅
-    params.madhab = Madhab.Shafi; // ✅
-    params.adjustments = {fajr: 8, isha: -40};
+    params.madhab = Madhab.Shafi;
+    params.highLatitudeRule = HighLatitudeRule.TwilightAngle;
+
+    // Suggest dynamic or region-specific adjustment
+    if (country.toLowerCase() === 'pakistan') {
+      params.adjustments = {fajr: 2, isha: 2};
+    } else if (country.toLowerCase() === 'india') {
+      params.adjustments = {fajr: 1, isha: 1};
+    } else {
+      params.adjustments = {fajr: 8, isha: -40}; // Default
+    }
+
     return params;
   };
 
@@ -1722,137 +1738,6 @@ const PrayerTime = ({
       setLoading(false);
     }
   };
-  // const getCalculationParams = (city = '', country = '') => {
-  //   const isIreland =
-  //     city.toLowerCase().includes('dublin') ||
-  //     country.toLowerCase().includes('ireland');
-
-  //   if (isIreland) {
-  //     // ✅ ICCI method for Ireland
-  //     // const params = CalculationMethod.Other();
-  //     // params.fajrAngle = 12;
-  //     // params.ishaAngle = 12;
-  //     // params.highLatitudeRule = HighLatitudeRule.TwilightAngle;
-
-  //     // params.madhab = Madhab.Shafi; // Ya Hanafi agar aap prefer karte hain
-  //     // params.adjustments = {fajr: -2, isha: 5}; // Optional minor tweaks
-  //     const params = CalculationMethod.Other();
-  //     params.fajrAngle = 15;
-  //     params.ishaAngle = 15;
-  //     params.highLatitudeRule = HighLatitudeRule.AngleBased; // Or 'Midnight' to match tighter Isha times
-  //     params.madhab = Madhab.Shafi;
-  //     params.adjustments = {fajr: 0, isha: 0};
-  //     return params;
-  //   } else {
-  //     // 🌍 MWL for the rest of the world
-  //     const params = CalculationMethod.Other();
-  //     params.fajrAngle = 15;
-  //     params.ishaAngle = 15;
-  //     params.highLatitudeRule = HighLatitudeRule.AngleBased; // Or 'Midnight' to match tighter Isha times
-  //     params.madhab = Madhab.Shafi;
-  //     params.adjustments = {fajr: 0, isha: 0};
-  //     return params;
-  //   }
-  // };
-
-  // const calculatePrayerTimes = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     const {latitude, longitude} = await getLocationCoordinates();
-  //     const tz = await getTimeZone(latitude, longitude);
-  //     setTimeZone(tz);
-
-  //     const now = getSafeLocalDate();
-  //     const zonedDate = toZonedTime(now, tz);
-
-  //     const coordinates = new Coordinates(latitude, longitude);
-  //     const params = getCalculationParams(); // 🔁 No method switching now
-  //     const prayerTimes = new PrayerTimes(coordinates, zonedDate, params);
-
-  //     const formatPrayerTime = date => {
-  //       const zoned = toZonedTime(date, tz);
-  //       return format(zoned, 'h:mm a', {timeZone: tz});
-  //     };
-
-  //     console.log('Fajr Angle:', params.fajrAngle);
-  //     console.log('Isha Angle:', params.ishaAngle);
-  //     console.log('High Latitude Rule:', params.highLatitudeRule);
-
-  //     const prayers = [
-  //       {
-  //         name: 'Fajr',
-  //         arabicName: PRAYER_ARABIC_NAMES.fajr,
-  //         time: formatPrayerTime(prayerTimes.fajr),
-  //         exactTime: prayerTimes.fajr,
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Sunrise',
-  //         arabicName: PRAYER_ARABIC_NAMES.sunrise,
-  //         time: formatPrayerTime(prayerTimes.sunrise),
-  //         exactTime: prayerTimes.sunrise,
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Dhuhr',
-  //         arabicName: PRAYER_ARABIC_NAMES.dhuhr,
-  //         time: formatPrayerTime(prayerTimes.dhuhr),
-  //         exactTime: prayerTimes.dhuhr,
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Asr',
-  //         arabicName: PRAYER_ARABIC_NAMES.asr,
-  //         time: formatPrayerTime(prayerTimes.asr),
-  //         exactTime: prayerTimes.asr,
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Maghrib',
-  //         arabicName: PRAYER_ARABIC_NAMES.maghrib,
-  //         time: formatPrayerTime(prayerTimes.maghrib),
-  //         exactTime: prayerTimes.maghrib,
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Isha',
-  //         arabicName: PRAYER_ARABIC_NAMES.isha,
-  //         time: formatPrayerTime(prayerTimes.isha),
-  //         exactTime: prayerTimes.isha,
-  //         isCurrentPrayer: false,
-  //       },
-  //     ];
-
-  //     const nextPrayerName = prayerTimes.nextPrayer();
-  //     let nextPrayer = null;
-
-  //     prayers.forEach(prayer => {
-  //       if (prayer.name.toLowerCase() === nextPrayerName) {
-  //         prayer.isCurrentPrayer = true;
-  //         prayer.remainingTime = formatRemainingTime(prayer.exactTime);
-  //         nextPrayer = {...prayer};
-  //       }
-
-  //       if (prayer.exactTime > new Date()) {
-  //         schedulePrayerNotification(prayer.name, prayer.exactTime);
-  //       }
-  //     });
-
-  //     setAllPrayers(prayers);
-  //     setCurrentPrayer(nextPrayer);
-  //     setLoading(false);
-
-  //     if (nextPrayer) {
-  //       await AsyncStorage.setItem('nextPrayer', JSON.stringify(nextPrayer));
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     setError('Prayer time calculation failed. Please try again.');
-  //     setLoading(false);
-  //   }
-  // };
 
   useEffect(() => {
     calculatePrayerTimes();
