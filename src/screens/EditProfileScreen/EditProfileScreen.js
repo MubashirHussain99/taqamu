@@ -23,8 +23,6 @@ const EditProfileScreen = ({route}) => {
   const navigation = useNavigation();
   const {profile, setProfileTrigger, setIsUpdated} = route.params;
 
-  // const [name, setName] = useState(profile?.name || '');
-  // const [email, setEmail] = useState(profile?.email || '');
   const [city, setCity] = useState(profile?.city || '');
   const [country, setCountry] = useState(profile?.country || '');
   const [password, setPassword] = useState('');
@@ -133,21 +131,7 @@ const EditProfileScreen = ({route}) => {
       return null;
     }
   };
-  // const formatLocationName = addr => {
-  //   if (!addr) return '';
-  //   const parts = [];
 
-  //   if (addr.city) parts.push(addr.city);
-  //   else if (addr.town) parts.push(addr.town);
-  //   else if (addr.village) parts.push(addr.village);
-  //   else if (addr.neighbourhood) parts.push(addr.neighbourhood);
-
-  //   if (addr.state) parts.push(addr.state);
-
-  //   if (addr.country) parts.push(addr.country);
-
-  //   return parts.join(', ');
-  // };
   const formatLocationName = addr => {
     if (!addr) return '';
 
@@ -159,6 +143,47 @@ const EditProfileScreen = ({route}) => {
     return ''; // fallback if none available
   };
 
+  // const getLocation = () => {
+  //   setLoadingLocation(true);
+  //   setLocationStatus('Getting Location ...');
+
+  //   Geolocation.getCurrentPosition(
+  //     async position => {
+  //       setLocationStatus('You are Here');
+  //       const longitude = position.coords.longitude;
+  //       const latitude = position.coords.latitude;
+
+  //       const addr = await getAddressFromCoords(latitude, longitude);
+  //       console.log('Address returned from getAddressFromCoords:', addr);
+
+  //       setLoadingLocation(false);
+
+  //       if (addr) {
+  //         const formattedLocation = formatLocationName(addr);
+  //         console.log(formattedLocation, 'formattedLocation');
+
+  //         setCity(formattedLocation);
+  //         setCountry(addr.country || '');
+
+  //         // New additions 👇
+  //         setStreet(addr.road || addr.shop || ''); // Fallback to shop if road not available
+  //         setZipCode(addr.postcode || '');
+  //         setState(addr.suburb || addr.city_district || '');
+
+  //         await saveLocationToStorage(formattedLocation);
+  //         loadRecentLocations(1);
+  //       }
+  //     },
+  //     error => {
+  //       setLocationStatus(error.message);
+  //       setLoadingLocation(false);
+  //       console.log('Location error:', error.message);
+  //     },
+  //     {enableHighAccuracy: false, timeout: 30000, maximumAge: 1000},
+  //   );
+  // };
+
+  // Load recent locations on mount
   const getLocation = () => {
     setLoadingLocation(true);
     setLocationStatus('Getting Location ...');
@@ -166,34 +191,46 @@ const EditProfileScreen = ({route}) => {
     Geolocation.getCurrentPosition(
       async position => {
         setLocationStatus('You are Here');
-        const longitude = position.coords.longitude;
-        const latitude = position.coords.latitude;
+        const {longitude, latitude} = position.coords;
 
         const addr = await getAddressFromCoords(latitude, longitude);
-        console.log('Address returned from getAddressFromCoords:', addr);
+        console.log('📍 Address returned from getAddressFromCoords:', addr);
 
         setLoadingLocation(false);
 
         if (addr) {
-          const formattedLocation = formatLocationName(addr);
-          setCity(formattedLocation); // <-- Set city input here
-          setCountry(addr.country || '');
-          await saveLocationToStorage(formattedLocation);
+          // Format and update address fields from nominatim response
+          const cityName =
+            addr.city || addr.town || addr.village || addr.neighbourhood || '';
+          const stateName = addr.suburb || addr.city_district || '';
+          const streetName = addr.road || addr.shop || '';
+          const zip = addr.postcode || '';
+          const countryName = addr.country || '';
+
+          setCity(cityName);
+          setState(stateName);
+          setStreet(streetName);
+          setZipCode(zip);
+          setCountry(countryName);
+
+          const full = `${streetName}, ${cityName}, ${stateName}, ${zip}, ${countryName}`;
+          setFullAddress(full);
+
+          await saveLocationToStorage(`${cityName}, ${countryName}`);
           loadRecentLocations(1);
         } else {
-          console.log('No address found from coordinates');
+          console.warn('⚠️ No address found from coordinates');
         }
       },
       error => {
         setLocationStatus(error.message);
         setLoadingLocation(false);
-        console.log('Location error:', error.message);
+        console.error('❌ Location error:', error.message);
       },
       {enableHighAccuracy: false, timeout: 30000, maximumAge: 1000},
     );
   };
 
-  // Load recent locations on mount
   useEffect(() => {
     loadRecentLocations(1);
   }, []);
@@ -264,16 +301,6 @@ const EditProfileScreen = ({route}) => {
       </View>
 
       <Text style={styles.label}>Location</Text>
-
-      {/* LocationSearch component for city input and autocomplete */}
-      {/* <LocationSearch
-        city={city}
-        country={country}
-        onSelect={({full, city: selCity, country: selCountry}) => {
-          setCity(full);
-          setCountry(selCountry);
-        }}
-      /> */}
 
       <LocationSearch
         city={city}

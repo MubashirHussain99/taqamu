@@ -104,34 +104,17 @@ const PrayerTimesScreen = () => {
                   <View style={styles.prayerActions}>
                     <View style={styles.prayerTimeContainer}>
                       <Text style={styles.prayerTime}>{prayer.time}</Text>
-                      {/* {isPrayerCompleted && (
-                        <Text style={styles.completedText}>Completed</Text>
-                      )} */}
                     </View>
 
-                    <View style={styles.actionButtons}>
-                      {/* Audio button */}
+                    {/* <View style={styles.actionButtons}>
                       <TouchableOpacity
                         onPress={() => {}}
                         style={styles.audioButton}>
                         <Text style={styles.audioButtonIcon}>🔊</Text>
                       </TouchableOpacity>
-                    </View>
+                    </View> */}
                   </View>
                 </View>
-                {prayer.isCurrentPrayer &&
-                  prayer.name.toLowerCase() === 'maghrib' && (
-                    <View style={styles.maghribCountdown}>
-                      <Text style={styles.countdownText}>
-                        <Text style={styles.countdownIcon}>⏱</Text>{' '}
-                        <Text style={styles.countdownTime}>1:14:01</Text> until
-                        Maghrib
-                      </Text>
-                      <TouchableOpacity>
-                        <Text style={styles.soundIcon}>🔊</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
               </View>
             );
           })}

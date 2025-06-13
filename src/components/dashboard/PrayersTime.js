@@ -1464,6 +1464,7 @@ import {
   configureNotifications,
   schedulePrayerNotification,
 } from '../notification_fix/NotificationService';
+import PrayerTimesScreen from './PrayerTimesScreen';
 
 const PRAYER_ARABIC_NAMES = {
   fajr: 'الفجر',
@@ -1490,7 +1491,17 @@ const PrayerTime = ({
   const [error, setError] = useState(null);
   const calculationInterval = useRef(null);
   const [timeZone, setTimeZone] = useState('UTC');
+  const [prayerModal, setPrayerModal] = useState(false);
+  // const [isMuted, setIsMuted] = useState(false);
+  const [mutedStates, setMutedStates] = useState({});
+  const toggleMute = prayerName => {
+    setMutedStates(prev => ({
+      ...prev,
+      [prayerName]: !prev[prayerName],
+    }));
+  };
 
+  // console.log(mutedStates, 'mutedStates');
   useEffect(() => {
     let unsubscribe = null;
     const setupNotifications = async () => {
@@ -1682,9 +1693,20 @@ const PrayerTime = ({
           nextPrayer = {...prayer};
         }
 
-        if (prayer.exactTime > new Date()) {
-          schedulePrayerNotification(prayer.name, prayer.exactTime);
-        }
+        // if (prayer.exactTime > new Date()) {
+        //   schedulePrayerNotification(prayer.name, prayer.exactTime);
+        // }
+        prayers.forEach(prayer => {
+          if (
+            mutedStates[prayer.name] === false &&
+            prayer.exactTime > new Date()
+          ) {
+            console.log(`Scheduling notification for ${prayer.name}`);
+            schedulePrayerNotification(prayer.name, prayer.exactTime);
+          } else {
+            console.log(`Skipping notification for ${prayer.name}`);
+          }
+        });
       });
 
       setAllPrayers(prayers);
@@ -1949,12 +1971,7 @@ const PrayerTime = ({
               <TouchableOpacity
                 style={styles.compactLink}
                 onPress={() => {
-                  navigation.navigate('PrayerTimesScreen', {
-                    prayers: allPrayers,
-                    selectedDate: selectedDate,
-                    prayerCompletionState: prayerCompletionState,
-                    onTogglePrayed: onTogglePrayed,
-                  });
+                  setPrayerModal(true);
                 }}>
                 <Text style={styles.compactLinkText}>View times</Text>
               </TouchableOpacity>
@@ -1984,13 +2001,7 @@ const PrayerTime = ({
                   <TouchableOpacity
                     style={styles.compactLink}
                     onPress={() => {
-                      navigation.navigate('PrayerTimesScreen', {
-                        prayers: allPrayers,
-                        selectedDate: selectedDate,
-                        prayerCompletionState: prayerCompletionState,
-                        onTogglePrayed: onTogglePrayed,
-                        localTime: localTime,
-                      });
+                      setPrayerModal(true);
                     }}>
                     <Text style={styles.compactLinkText}>View times</Text>
                   </TouchableOpacity>
@@ -2000,6 +2011,19 @@ const PrayerTime = ({
           </View>
         </View>
       </View>
+      {prayerModal == true && (
+        <PrayerTimesScreen
+          prayers={allPrayers}
+          selectedDate={selectedDate}
+          prayerCompletionState={prayerCompletionState}
+          onTogglePrayed={onTogglePrayed}
+          localTime={localTime}
+          setPrayerModal={setPrayerModal}
+          prayerModal={prayerModal}
+          toggleMute={toggleMute}
+          mutedStates={mutedStates}
+        />
+      )}
     </View>
   );
 };

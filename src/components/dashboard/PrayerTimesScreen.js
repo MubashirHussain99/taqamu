@@ -12,30 +12,32 @@ import {format} from 'date-fns';
 import RootNavigator from './BottomNavigation';
 
 // PrayerTimesScreen component
-const PrayerTimesScreen = ({route, navigation}) => {
-  const {
-    prayers,
-    selectedDate,
-    prayerCompletionState,
-    onTogglePrayed,
-    localTime,
-  } = route.params; // prayers props passed from previous screen
+const PrayerTimesScreen = ({
+  prayers,
+  selectedDate,
+  prayerCompletionState,
+  onTogglePrayed,
+  localTime,
+  setPrayerModal,
+  prayerModal,
+  toggleMute,
+  mutedStates,
+}) => {
+  // const {} = route.params; // prayers props passed from previous screen
   const today = new Date();
-  const [modalVisible, setModalVisible] = useState(true); // State for modal visibility
 
   // Handle navigation back to previous screen
   const handleBack = () => {
-    navigation.goBack();
+    setPrayerModal(false);
   };
 
-  console.log(localTime, '');
 
   return (
     <Modal
-      visible={modalVisible}
+      visible={prayerModal}
       animationType="slide"
       transparent={false} // Set this to false to make the modal fullscreen
-      onRequestClose={() => setModalVisible(false)} // Optional close behavior
+      onRequestClose={() => setPrayerModal(false)} // Optional close behavior
     >
       <View style={styles.container}>
         {/* Header section with back button */}
@@ -125,13 +127,12 @@ const PrayerTimesScreen = ({route, navigation}) => {
                       </View>
 
                       <View style={styles.actionButtons}>
-                        {/* Audio button */}
                         <TouchableOpacity
-                          onPress={() => {
-                            // Handle adhan settings
-                          }}
+                          onPress={() => toggleMute(prayer.name)} // Toggle mute for this specific prayer
                           style={styles.audioButton}>
-                          <Text style={styles.audioButtonIcon}>🔊</Text>
+                          <Text style={styles.audioButtonIcon}>
+                            {mutedStates[prayer.name] ? '🔇' : '🔊'}
+                          </Text>
                         </TouchableOpacity>
 
                         {/* Prayer tracking button */}
@@ -161,21 +162,6 @@ const PrayerTimesScreen = ({route, navigation}) => {
                       </View>
                     </View>
                   </View>
-
-                  {/* Special Maghrib countdown */}
-                  {prayer.isCurrentPrayer &&
-                    prayer.name.toLowerCase() === 'maghrib' && (
-                      <View style={styles.maghribCountdown}>
-                        <Text style={styles.countdownText}>
-                          <Text style={styles.countdownIcon}>⏱</Text>{' '}
-                          <Text style={styles.countdownTime}>1:14:01</Text>{' '}
-                          until Maghrib
-                        </Text>
-                        <TouchableOpacity>
-                          <Text style={styles.soundIcon}>🔊</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
                 </View>
               );
             })}

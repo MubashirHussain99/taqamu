@@ -38,9 +38,7 @@ import countryCodes from '../../components/layout/countryCodes';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 const todayHijri = new HijriDate(); // This gives you the current Islamic date
-const hijriDateString = `${todayHijri.getDate()}-${
-  todayHijri.getMonth() + 1
-}-${todayHijri.getFullYear()}`;
+const hijriDateString = `${todayHijri.getDate()}-${todayHijri.getMonth()}-${todayHijri.getFullYear()}`;
 
 // Get today's Islamic date
 // const todayHijri = new HijriDate();
