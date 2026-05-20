@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "138836721893",
+    "project_id": "taqamu-e0a23",
+    "storage_bucket": "taqamu-e0a23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:138836721893:android:b951b67f10812f1fbb940c",
+        "android_client_info": {
+          "package_name": "com.taqamu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "138836721893-vabp7u81eqocki6bamdcj65ibhvveulp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy37bdMEGuVtae07EjBABdnFqgf1ihHE4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "138836721893-vabp7u81eqocki6bamdcj65ibhvveulp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
