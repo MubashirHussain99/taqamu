@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  ScrollView,
 } from 'react-native';
-import {Coordinates, CalculationMethod, Madhab, PrayerTimes} from 'adhan';
-import * as adhan from 'adhan';
-import {format, differenceInMinutes} from 'date-fns';
+import Geolocation from '@react-native-community/geolocation';
+import {format} from 'date-fns';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,15 +18,20 @@ import {
   initializeNotificationService,
   schedulePrayerNotification,
 } from '../notification_fix/NotificationService';
+import {
+  syncPrayerNotifications,
+  recordPrayerTransition,
+} from '../../services/notificationHistory';
+import {
+  buildPrayerSchedule,
+  persistPrayerStatus,
+} from '../../services/prayerSchedule';
 
-const PRAYER_ARABIC_NAMES = {
-  fajr: 'الفجر',
-  sunrise: 'الشروق',
-  dhuhr: 'الظهر',
-  asr: 'العصر',
-  maghrib: 'المغرب',
-  isha: 'العشاء',
-};
+const COORDS_CACHE_PREFIX = 'prayerCoords:';
+const COORDS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+const getCoordsCacheKey = (cityName, countryName) =>
+  `${COORDS_CACHE_PREFIX}${cityName}|${countryName}`.toLowerCase();
 
 const PrayerTime = ({
   variant = 'compact',
@@ -35,13 +40,21 @@ const PrayerTime = ({
   selectedDate = new Date(),
   city,
   country,
+  bottomInset = 0,
 }) => {
   const navigation = useNavigation();
   const [currentPrayer, setCurrentPrayer] = useState(null);
+  const [nextPrayer, setNextPrayer] = useState(null);
   const [allPrayers, setAllPrayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const calculationInterval = useRef(null);
+  const coordsRef = useRef(null);
+  const locationRequestIdRef = useRef(0);
+  const previousPrayerNameRef = useRef(null);
+
+  const isStaleRequest = requestId =>
+    requestId !== locationRequestIdRef.current;
 
   useEffect(() => {
     let unsubscribe = null;
@@ -72,443 +85,284 @@ const PrayerTime = ({
     };
   }, []);
 
-  const getLocationCoordinates = async () => {
-    if (!city || !country) {
-      throw new Error('City or country not provided');
+  const readCachedCoordinates = async (allowExpired = false) => {
+    try {
+      const raw = await AsyncStorage.getItem(getCoordsCacheKey(city, country));
+      if (!raw) {
+        return null;
+      }
+
+      const cached = JSON.parse(raw);
+      if (!allowExpired && Date.now() - cached.cachedAt > COORDS_CACHE_TTL_MS) {
+        return null;
+      }
+
+      const coords = {
+        latitude: cached.latitude,
+        longitude: cached.longitude,
+      };
+
+      return isValidCoordinates(coords) ? coords : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeCachedCoordinates = async coords => {
+    await AsyncStorage.setItem(
+      getCoordsCacheKey(city, country),
+      JSON.stringify({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        cachedAt: Date.now(),
+      }),
+    );
+  };
+
+  const buildGeocodeQuery = () => {
+    const cityName = city?.trim() || '';
+    const countryName = country?.trim() || '';
+
+    if (!cityName && !countryName) {
+      return null;
     }
 
-    const url = `https://nominatim.openstreetmap.org/search?city=${city}&country=${country}&format=json`;
+    if (
+      countryName &&
+      cityName.toLowerCase().includes(countryName.toLowerCase())
+    ) {
+      return cityName;
+    }
 
-    // const response = await axios.get(url, {
-    //   headers: {'Accept-Language': 'en'},
-    // });
+    if (cityName && countryName) {
+      return `${cityName}, ${countryName}`;
+    }
+
+    return cityName || countryName;
+  };
+
+  const isValidCoordinates = coords =>
+    Number.isFinite(coords?.latitude) && Number.isFinite(coords?.longitude);
+
+  const getDeviceCoordinates = () =>
+    new Promise((resolve, reject) => {
+      Geolocation.getCurrentPosition(
+        position =>
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          }),
+        reject,
+        {enableHighAccuracy: false, timeout: 15000, maximumAge: 600000},
+      );
+    });
+
+  const fetchCoordinatesFromApi = async () => {
+    const query = buildGeocodeQuery();
+    if (!query) {
+      throw new Error('Location not available');
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+      query,
+    )}&format=json&limit=1`;
+
     const response = await axios.get(url, {
       headers: {
         'Accept-Language': 'en',
         'User-Agent': 'Taqamu/1.0 nexomosmubashir@gmail.com',
       },
+      timeout: 15000,
     });
 
     const results = response.data;
 
     if (!Array.isArray(results) || results.length === 0) {
-      throw new Error('No coordinates found');
+      throw new Error('No coordinates found for this location');
     }
 
     const data = results[0];
-
-    return {
+    const coords = {
       latitude: parseFloat(data.lat),
       longitude: parseFloat(data.lon),
     };
-  };
 
-  const getFormattedRemainingTime = prayerTime => {
-    const now = new Date();
-    const diffMinutes = differenceInMinutes(prayerTime, now);
-
-    if (diffMinutes <= 0) {
-      return 'Time has passed';
-    } else if (diffMinutes < 60) {
-      return `${diffMinutes} min remaining`;
-    } else {
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      return `${hours} hr ${minutes} min remaining`;
-    }
-  };
-
-  // const calculatePrayerTimes = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     const locationCoordinates = await getLocationCoordinates();
-  //     const {latitude, longitude} = locationCoordinates;
-  //     const adhanCoordinates = new Coordinates(latitude, longitude);
-  //     const date = new Date();
-  //     const calculationParams = CalculationMethod.MoonsightingCommittee();
-  //     const prayerTimes = new adhan.PrayerTimes(
-  //       adhanCoordinates,
-  //       date,
-  //       calculationParams,
-  //     );
-
-  //     const prayers = [
-  //       {
-  //         name: 'Fajr',
-  //         arabicName: PRAYER_ARABIC_NAMES.fajr,
-  //         time: format(prayerTimes.fajr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.fajr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Sunrise',
-  //         arabicName: PRAYER_ARABIC_NAMES.sunrise,
-  //         time: format(prayerTimes.sunrise, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.sunrise),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Dhuhr',
-  //         arabicName: PRAYER_ARABIC_NAMES.dhuhr,
-  //         time: format(prayerTimes.dhuhr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.dhuhr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Asr',
-  //         arabicName: PRAYER_ARABIC_NAMES.asr,
-  //         time: format(prayerTimes.asr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.asr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Maghrib',
-  //         arabicName: PRAYER_ARABIC_NAMES.maghrib,
-  //         time: format(prayerTimes.maghrib, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.maghrib),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Isha',
-  //         arabicName: PRAYER_ARABIC_NAMES.isha,
-  //         time: format(prayerTimes.isha, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.isha),
-  //         isCurrentPrayer: false,
-  //       },
-  //     ];
-
-  //     const nextPrayerName = prayerTimes.nextPrayer();
-
-  //     let nextPrayer = null;
-
-  //     prayers.forEach(prayer => {
-  //       const lowerName = prayer.name.toLowerCase();
-
-  //       if (nextPrayerName === lowerName) {
-  //         prayer.isCurrentPrayer = true;
-  //         prayer.remainingTime = getFormattedRemainingTime(prayer.exactTime);
-  //         nextPrayer = {...prayer};
-  //       }
-
-  //       // if (prayer.exactTime > new Date()) {
-  //       //   console.log(
-  //       //     'Scheduling notification for:',
-  //       //     currentPrayer.name,
-  //       //     currentPrayer.exactTime,
-  //       //   );
-  //       //   schedulePrayerNotification(
-  //       //     currentPrayer.name,
-  //       //     currentPrayer.exactTime,
-  //       //   );
-  //       // }
-  //     });
-  //     prayers.forEach(prayer => {
-  //       console.log(
-  //         'Scheduling notification for:',
-  //         prayer.name,
-  //         prayer.exactTime?.toISOString(),
-  //       );
-  //       if (prayer.exactTime instanceof Date && prayer.exactTime > new Date()) {
-  //         schedulePrayerNotification(prayer.name, prayer.exactTime);
-  //       }
-  //     });
-
-  //     setAllPrayers(prayers);
-  //     setCurrentPrayer(nextPrayer);
-  //     setLoading(false);
-
-  //     if (nextPrayer) {
-  //       try {
-  //         await AsyncStorage.setItem('nextPrayer', JSON.stringify(nextPrayer));
-  //       } catch (storageError) {
-  //         console.error('Failed to store nextPrayer', storageError);
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error('Prayer time calculation error:', err);
-  //     setError(err.message);
-  //     setLoading(false);
-  //   }
-  // };
-  // const calculatePrayerTimes = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     const locationCoordinates = await getLocationCoordinates();
-  //     const {latitude, longitude} = locationCoordinates;
-  //     const date = new Date();
-  //     const coordinates = new Coordinates(latitude, longitude);
-  //     const params = CalculationMethod.MuslimWorldLeague(); // Make sure this exists!
-  //     params.madhab = Madhab.Shafi;
-  //     params.adjustments = {
-  //       fajr: -2,
-  //       isha: 5,
-  //     };
-
-  //     const prayerTimes = new PrayerTimes(coordinates, date, params);
-
-  //     const prayers = [
-  //       {
-  //         name: 'Fajr',
-  //         arabicName: PRAYER_ARABIC_NAMES.fajr,
-  //         time: format(prayerTimes.fajr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.fajr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Sunrise',
-  //         arabicName: PRAYER_ARABIC_NAMES.sunrise,
-  //         time: format(prayerTimes.sunrise, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.sunrise),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Dhuhr',
-  //         arabicName: PRAYER_ARABIC_NAMES.dhuhr,
-  //         time: format(prayerTimes.dhuhr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.dhuhr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Asr',
-  //         arabicName: PRAYER_ARABIC_NAMES.asr,
-  //         time: format(prayerTimes.asr, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.asr),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Maghrib',
-  //         arabicName: PRAYER_ARABIC_NAMES.maghrib,
-  //         time: format(prayerTimes.maghrib, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.maghrib),
-  //         isCurrentPrayer: false,
-  //       },
-  //       {
-  //         name: 'Isha',
-  //         arabicName: PRAYER_ARABIC_NAMES.isha,
-  //         time: format(prayerTimes.isha, 'h:mm a'),
-  //         exactTime: new Date(prayerTimes.isha),
-  //         isCurrentPrayer: false,
-  //       },
-  //     ];
-
-  //     const nextPrayerName = prayerTimes.nextPrayer();
-
-  //     let nextPrayer = null;
-
-  //     prayers.forEach(prayer => {
-  //       const lowerName = prayer.name.toLowerCase();
-
-  //       if (nextPrayerName === lowerName) {
-  //         prayer.isCurrentPrayer = true;
-  //         prayer.remainingTime = getFormattedRemainingTime(prayer.exactTime);
-  //         nextPrayer = {...prayer};
-  //       }
-
-  //       // if (prayer.exactTime > new Date()) {
-  //       //   console.log(
-  //       //     'Scheduling notification for:',
-  //       //     currentPrayer.name,
-  //       //     currentPrayer.exactTime,
-  //       //   );
-  //       //   schedulePrayerNotification(
-  //       //     currentPrayer.name,
-  //       //     currentPrayer.exactTime,
-  //       //   );
-  //       // }
-  //     });
-  //     prayers.forEach(prayer => {
-  //       console.log(
-  //         'Scheduling notification for:',
-  //         prayer.name,
-  //         prayer.exactTime?.toISOString(),
-  //       );
-  //       if (prayer.exactTime instanceof Date && prayer.exactTime > new Date()) {
-  //         schedulePrayerNotification(prayer.name, prayer.exactTime);
-  //       }
-  //     });
-
-  //     setAllPrayers(prayers);
-  //     setCurrentPrayer(nextPrayer);
-  //     setLoading(false);
-
-  //     if (nextPrayer) {
-  //       try {
-  //         await AsyncStorage.setItem('nextPrayer', JSON.stringify(nextPrayer));
-  //       } catch (storageError) {
-  //         console.error('Failed to store nextPrayer', storageError);
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error('Prayer time calculation error:', err);
-  //     setError(err.message);
-  //     setLoading(false);
-  //   }
-  // };
-
-  const getCalculationParams = methodKey => {
-    let params;
-
-    switch (methodKey) {
-      case 'ICCI':
-        const paramsICCI = CalculationMethod.Other();
-        paramsICCI.fajrAngle = 12;
-        paramsICCI.ishaAngle = 12;
-        paramsICCI.madhab = Madhab.Shafi;
-        paramsICCI.highLatitudeRule = HighLatitudeRule.MiddleOfTheNight;
-        break;
-
-      case 'MWL':
-        params = CalculationMethod.MuslimWorldLeague();
-        break;
-      case 'ISNA':
-        params = CalculationMethod.NorthAmerica();
-        break;
-      case 'UmmAlQura':
-        params = CalculationMethod.UmmAlQura();
-        break;
-      case 'Egyptian':
-        params = CalculationMethod.Egyptian();
-        break;
-      case 'Tehran':
-        params = CalculationMethod.Tehran();
-        break;
-      case 'Karachi':
-        params = CalculationMethod.Karachi();
-        break;
-      case 'France12':
-        params = CalculationMethod.Other();
-        params.fajrAngle = 12;
-        params.ishaAngle = 12;
-        break;
-      case 'France15':
-        params = CalculationMethod.Other();
-        params.fajrAngle = 15;
-        params.ishaAngle = 15;
-        break;
-      case 'France18':
-        params = CalculationMethod.Other();
-        params.fajrAngle = 18;
-        params.ishaAngle = 18;
-        break;
-      case 'Jafari':
-        params = CalculationMethod.Other();
-        params.fajrAngle = 16;
-        params.ishaAngle = 14;
-        break;
-      default:
-        params = CalculationMethod.MuslimWorldLeague();
-        break;
+    if (!isValidCoordinates(coords)) {
+      throw new Error('Invalid coordinates returned for this location');
     }
 
-    // Set madhab and optional manual adjustments
-    params.madhab = Madhab.Shafi;
-    params.adjustments = {fajr: -2, isha: 5};
-
-    return params;
+    return coords;
   };
 
-  const calculatePrayerTimes = async selectedMethodKey => {
+  const getLocationCoordinates = async () => {
+    if (!city?.trim() || !country?.trim()) {
+      setLoading(false);
+      setError('Location not available');
+      return;
+    }
+
+    if (
+      coordsRef.current?.city === city &&
+      coordsRef.current?.country === country
+    ) {
+      return coordsRef.current.coords;
+    }
+
+    const freshCache = await readCachedCoordinates();
+    if (freshCache && isValidCoordinates(freshCache)) {
+      coordsRef.current = {city, country, coords: freshCache};
+      return freshCache;
+    }
+
     try {
-      setLoading(true);
-      setError(null);
+      const coords = await fetchCoordinatesFromApi();
+      await writeCachedCoordinates(coords);
+      coordsRef.current = {city, country, coords};
+      return coords;
+    } catch (err) {
+      const staleCache = await readCachedCoordinates(true);
+      if (staleCache && isValidCoordinates(staleCache)) {
+        coordsRef.current = {city, country, coords: staleCache};
+        return staleCache;
+      }
 
-      const {latitude, longitude} = await getLocationCoordinates();
-      const date = new Date();
-      const coordinates = new Coordinates(latitude, longitude);
-      const params = getCalculationParams(selectedMethodKey);
-
-      const prayerTimes = new PrayerTimes(coordinates, date, params);
-
-      const prayers = [
-        {
-          name: 'Fajr',
-          arabicName: PRAYER_ARABIC_NAMES.fajr,
-          time: format(prayerTimes.fajr, 'h:mm a'),
-          exactTime: new Date(prayerTimes.fajr),
-          isCurrentPrayer: false,
-        },
-        {
-          name: 'Sunrise',
-          arabicName: PRAYER_ARABIC_NAMES.sunrise,
-          time: format(prayerTimes.sunrise, 'h:mm a'),
-          exactTime: new Date(prayerTimes.sunrise),
-          isCurrentPrayer: false,
-        },
-        {
-          name: 'Dhuhr',
-          arabicName: PRAYER_ARABIC_NAMES.dhuhr,
-          time: format(prayerTimes.dhuhr, 'h:mm a'),
-          exactTime: new Date(prayerTimes.dhuhr),
-          isCurrentPrayer: false,
-        },
-        {
-          name: 'Asr',
-          arabicName: PRAYER_ARABIC_NAMES.asr,
-          time: format(prayerTimes.asr, 'h:mm a'),
-          exactTime: new Date(prayerTimes.asr),
-          isCurrentPrayer: false,
-        },
-        {
-          name: 'Maghrib',
-          arabicName: PRAYER_ARABIC_NAMES.maghrib,
-          time: format(prayerTimes.maghrib, 'h:mm a'),
-          exactTime: new Date(prayerTimes.maghrib),
-          isCurrentPrayer: false,
-        },
-        {
-          name: 'Isha',
-          arabicName: PRAYER_ARABIC_NAMES.isha,
-          time: format(prayerTimes.isha, 'h:mm a'),
-          exactTime: new Date(prayerTimes.isha),
-          isCurrentPrayer: false,
-        },
-      ];
-
-      const nextPrayerName = prayerTimes.nextPrayer();
-      let nextPrayer = null;
-
-      prayers.forEach(prayer => {
-        const lowerName = prayer.name.toLowerCase();
-        if (nextPrayerName === lowerName) {
-          prayer.isCurrentPrayer = true;
-          prayer.remainingTime = getFormattedRemainingTime(prayer.exactTime);
-          nextPrayer = {...prayer};
+      try {
+        const deviceCoords = await getDeviceCoordinates();
+        if (isValidCoordinates(deviceCoords)) {
+          await writeCachedCoordinates(deviceCoords);
+          coordsRef.current = {city, country, coords: deviceCoords};
+          return deviceCoords;
         }
+      } catch (deviceErr) {
+        console.warn('Device location fallback failed:', deviceErr?.message);
+      }
 
-        if (prayer.exactTime > new Date()) {
+      throw err;
+    }
+  };
+
+  const calculatePrayerTimes = async (
+    selectedMethodKey,
+    {showLoading = true, scheduleNotifications = false, requestId} = {},
+  ) => {
+    try {
+      if (showLoading) {
+        setLoading(true);
+        setError(null);
+      }
+
+      const location = await getLocationCoordinates();
+      if (isStaleRequest(requestId)) {
+        return;
+      }
+
+      if (!location) {
+        throw new Error('Location is required to calculate prayer times');
+      }
+
+      const {latitude, longitude} = location;
+      const {
+        prayers,
+        currentPrayer: activePrayer,
+        nextPrayer: upcomingPrayer,
+        scheduleNotifications: toSchedule,
+      } = buildPrayerSchedule(latitude, longitude, selectedMethodKey);
+
+      if (isStaleRequest(requestId)) {
+        return;
+      }
+
+      if (scheduleNotifications) {
+        toSchedule.forEach(prayer => {
           schedulePrayerNotification(prayer.name, prayer.exactTime);
-        }
-      });
+        });
+      }
 
       setAllPrayers(prayers);
-      setCurrentPrayer(nextPrayer);
-      setLoading(false);
+      setCurrentPrayer(activePrayer);
+      setNextPrayer(upcomingPrayer);
+      setError(null);
 
-      if (nextPrayer) {
-        await AsyncStorage.setItem('nextPrayer', JSON.stringify(nextPrayer));
+      const locationLabel = [city, country].filter(Boolean).join(', ');
+      const prayerStatus = {
+        currentPrayer: activePrayer,
+        nextPrayer: upcomingPrayer,
+        locationLabel: locationLabel || undefined,
+        updatedAt: new Date().toISOString(),
+      };
+      await persistPrayerStatus(prayerStatus);
+
+      await syncPrayerNotifications({
+        currentPrayer: activePrayer,
+        nextPrayer: upcomingPrayer,
+        locationLabel: locationLabel || undefined,
+      });
+
+      if (
+        activePrayer?.name &&
+        previousPrayerNameRef.current &&
+        previousPrayerNameRef.current !== activePrayer.name
+      ) {
+        await recordPrayerTransition(
+          previousPrayerNameRef.current,
+          activePrayer,
+        );
+      }
+      if (activePrayer?.name) {
+        previousPrayerNameRef.current = activePrayer.name;
       }
     } catch (err) {
+      if (isStaleRequest(requestId)) {
+        return;
+      }
+
       console.error('Prayer time calculation error:', err);
-      setError(err.message);
-      setLoading(false);
+      const message =
+        err?.response?.status === 429
+          ? 'Location lookup is temporarily limited. Please try again in a moment.'
+          : err?.message || 'Failed to calculate prayer times';
+      setError(message);
+    } finally {
+      if (!isStaleRequest(requestId) && showLoading) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    calculatePrayerTimes();
+    if (!city?.trim() || !country?.trim()) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
-    // Update every minute instead of 15 seconds to reduce load
+    const requestId = ++locationRequestIdRef.current;
+    coordsRef.current = null;
+    setError(null);
+    setLoading(true);
+    setCurrentPrayer(null);
+    setNextPrayer(null);
+    setAllPrayers([]);
+
+    calculatePrayerTimes(undefined, {
+      showLoading: true,
+      scheduleNotifications: true,
+      requestId,
+    });
+
     calculationInterval.current = setInterval(() => {
-      calculatePrayerTimes();
+      calculatePrayerTimes(undefined, {
+        showLoading: false,
+        scheduleNotifications: false,
+        requestId: locationRequestIdRef.current,
+      });
     }, 60000);
 
     return () => {
+      locationRequestIdRef.current += 1;
       if (calculationInterval.current) {
         clearInterval(calculationInterval.current);
+        calculationInterval.current = null;
       }
     };
   }, [city, country]);
@@ -526,92 +380,192 @@ const PrayerTime = ({
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            const requestId = ++locationRequestIdRef.current;
+            coordsRef.current = null;
+            calculatePrayerTimes(undefined, {
+              showLoading: true,
+              scheduleNotifications: true,
+              requestId,
+            });
+          }}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  if (!currentPrayer) {
+  if (!currentPrayer && !nextPrayer && variant !== 'full') {
     return null;
   }
 
-  const currentPrayerIndex = allPrayers.findIndex(
-    p => p.name.toLowerCase() === currentPrayer.name.toLowerCase(),
-  );
-
-  let upcomingPrayer = null;
-  for (let i = currentPrayerIndex + 1; i < allPrayers.length; i++) {
-    if (allPrayers[i]) {
-      upcomingPrayer = allPrayers[i];
-      break;
+  if (variant === 'full') {
+    if (!allPrayers.length) {
+      return null;
     }
-  }
 
-  if (!upcomingPrayer && currentPrayerIndex === allPrayers.length - 1) {
-    upcomingPrayer = allPrayers[0];
-  }
+    return (
+      <ScrollView
+        style={styles.fullListScroll}
+        contentContainerStyle={[
+          styles.fullListContent,
+          {paddingBottom: 16 + bottomInset},
+        ]}>
+        <View style={styles.prayerList}>
+          {allPrayers.map((prayer, index) => {
+            if (prayer.name.toLowerCase() === 'sunrise') {
+              return null;
+            }
 
-  if (upcomingPrayer) {
-    AsyncStorage.setItem('upcomingPrayer', JSON.stringify(upcomingPrayer))
-      .then()
-      .catch(error => console.error('Failed to store upcomingPrayer', error));
+            const validDate = selectedDate
+              ? new Date(selectedDate)
+              : new Date();
+            const prayerId = `${prayer.name.toLowerCase()}-${format(
+              validDate,
+              'yyyy-MM-dd',
+            )}`;
+            const isPrayerCompleted = prayerCompletionState[prayerId] || false;
+
+            return (
+              <View
+                key={prayerId}
+                style={[
+                  styles.fullPrayerCard,
+                  prayer.isCurrentPrayer && styles.fullCurrentPrayerCard,
+                ]}>
+                <View style={styles.fullPrayerCardContent}>
+                  <View style={styles.fullPrayerInfo}>
+                    <View
+                      style={[
+                        styles.fullPrayerIconContainer,
+                        prayer.isCurrentPrayer &&
+                          styles.fullCurrentPrayerIconContainer,
+                      ]}>
+                      <Text style={styles.fullPrayerIcon}>
+                        {prayer.name.toLowerCase() === 'fajr' ||
+                        prayer.name.toLowerCase() === 'isha'
+                          ? '🌟'
+                          : prayer.name.toLowerCase() === 'maghrib'
+                          ? '🌙'
+                          : '🕒'}
+                      </Text>
+                    </View>
+                    <View style={styles.fullPrayerDetails}>
+                      <View style={styles.fullPrayerNameRow}>
+                        <Text style={styles.fullPrayerName}>{prayer.name}</Text>
+                        <Text style={styles.fullPrayerArabicName}>
+                          {prayer.arabicName}
+                        </Text>
+                      </View>
+                      {prayer.remainingTime && prayer.isCurrentPrayer && (
+                        <Text style={styles.fullRemainingTime}>
+                          {prayer.remainingTime}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={styles.fullPrayerActions}>
+                    <View style={styles.fullPrayerTimeContainer}>
+                      <Text style={styles.fullPrayerTime}>{prayer.time}</Text>
+                      {isPrayerCompleted && (
+                        <Text style={styles.fullCompletedText}>Completed</Text>
+                      )}
+                    </View>
+
+                    {onTogglePrayed && (
+                      <TouchableOpacity
+                        onPress={() => onTogglePrayed(prayerId)}
+                        style={[
+                          styles.fullTrackButton,
+                          isPrayerCompleted && styles.fullTrackButtonCompleted,
+                        ]}>
+                        <Text style={styles.fullTrackButtonIcon}>
+                          {isPrayerCompleted ? '✓' : '○'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
   }
 
   return (
     <View style={styles.compactContainer}>
       <View style={styles.compactGrid}>
-        {/* Next Prayer Card */}
+        {/* Current Prayer Card */}
         <View style={styles.compactCard}>
-          <Text style={styles.compactLabel}>Next</Text>
+          <Text style={styles.compactLabel}>Current</Text>
           <View style={styles.compactContent}>
-            <View style={styles.compactHeader}>
-              <Text style={styles.compactPrayerName}>{currentPrayer.name}</Text>
-              {currentPrayer.name.toLowerCase() === 'maghrib' && (
-                <Text style={styles.compactIcon}>🌙</Text>
-              )}
-              {currentPrayer.name.toLowerCase() === 'isha' && (
-                <Text style={styles.compactIcon}>🌟</Text>
-              )}
-            </View>
-            <Text style={styles.compactArabicName}>
-              {currentPrayer.arabicName}
-            </Text>
-            <View style={styles.compactFooter}>
-              <Text style={styles.compactTime}>{currentPrayer.time}</Text>
-              <TouchableOpacity
-                style={styles.compactLink}
-                onPress={() => {
-                  navigation.navigate('PrayerTimesScreen', {
-                    prayers: allPrayers,
-                    selectedDate: selectedDate,
-                    prayerCompletionState: prayerCompletionState,
-                    onTogglePrayed: onTogglePrayed,
-                  });
-                }}>
-                <Text style={styles.compactLinkText}>View times</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Upcoming Prayer Card */}
-        <View style={styles.compactCard}>
-          <Text style={styles.compactLabel}>Upcoming</Text>
-          <View style={styles.compactContent}>
-            {upcomingPrayer && (
+            {currentPrayer ? (
               <>
                 <View style={styles.compactHeader}>
                   <Text style={styles.compactPrayerName}>
-                    {upcomingPrayer.name}
+                    {currentPrayer.name}
                   </Text>
-                  {upcomingPrayer.name.toLowerCase() === 'isha' && (
+                  {currentPrayer.name.toLowerCase() === 'maghrib' && (
+                    <Text style={styles.compactIcon}>🌙</Text>
+                  )}
+                  {currentPrayer.name.toLowerCase() === 'isha' && (
                     <Text style={styles.compactIcon}>🌟</Text>
                   )}
                 </View>
                 <Text style={styles.compactArabicName}>
-                  {upcomingPrayer.arabicName}
+                  {currentPrayer.arabicName}
                 </Text>
                 <View style={styles.compactFooter}>
-                  <Text style={styles.compactTime}>{upcomingPrayer.time}</Text>
+                  <Text style={styles.compactTime}>{currentPrayer.time}</Text>
+                  <TouchableOpacity
+                    style={styles.compactLink}
+                    onPress={() => {
+                      navigation.navigate('PrayerTimesScreen', {
+                        prayers: allPrayers,
+                        selectedDate: selectedDate,
+                        prayerCompletionState: prayerCompletionState,
+                        onTogglePrayed: onTogglePrayed,
+                      });
+                    }}>
+                    <Text style={styles.compactLinkText}>View times</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <Text style={styles.compactArabicName}>Between prayers</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Next Prayer Card */}
+        <View style={styles.compactCard}>
+          <Text style={styles.compactLabel}>Next</Text>
+          <View style={styles.compactContent}>
+            {nextPrayer && (
+              <>
+                <View style={styles.compactHeader}>
+                  <Text style={styles.compactPrayerName}>
+                    {nextPrayer.name}
+                  </Text>
+                  {nextPrayer.name.toLowerCase() === 'isha' && (
+                    <Text style={styles.compactIcon}>🌟</Text>
+                  )}
+                </View>
+                <Text style={styles.compactArabicName}>
+                  {nextPrayer.arabicName}
+                </Text>
+                <View style={styles.compactFooter}>
+                  <Text style={styles.compactTime}>{nextPrayer.time}</Text>
+                  {/* {nextPrayer.remainingTime ? (
+                    <Text style={styles.compactRemaining}>
+                      {nextPrayer.remainingTime}
+                    </Text>
+                  ) : null} */}
                   <TouchableOpacity
                     style={styles.compactLink}
                     onPress={() => {
@@ -658,6 +612,18 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#f87171',
+    marginBottom: 12,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#334155',
+  },
+  retryButtonText: {
+    color: '#f59e0b',
+    fontWeight: '500',
   },
   compactContainer: {
     flexDirection: 'column',
@@ -669,7 +635,8 @@ const styles = StyleSheet.create({
   },
   compactCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#0d4236',
+    // opacity: 0.4,
     borderWidth: 1,
     borderColor: '#334155',
     borderRadius: 12,
@@ -710,6 +677,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'white',
   },
+  compactRemaining: {
+    fontSize: 12,
+    color: '#6ee7b7',
+    marginTop: 2,
+  },
   compactLink: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -721,6 +693,111 @@ const styles = StyleSheet.create({
   compactLinkIcon: {
     marginLeft: 4,
     color: '#f59e0b',
+  },
+  fullListScroll: {
+    flex: 1,
+  },
+  fullListContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 16,
+  },
+  prayerList: {
+    gap: 12,
+  },
+  fullPrayerCard: {
+    backgroundColor: '#0d4236',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 12,
+  },
+  fullCurrentPrayerCard: {
+    backgroundColor: '#374151',
+    borderColor: '#10b981',
+  },
+  fullPrayerCardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  fullPrayerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  fullPrayerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#334155',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  fullCurrentPrayerIconContainer: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  fullPrayerIcon: {
+    fontSize: 20,
+  },
+  fullPrayerDetails: {
+    flex: 1,
+  },
+  fullPrayerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  fullPrayerName: {
+    fontWeight: '500',
+    color: 'white',
+    fontSize: 16,
+  },
+  fullPrayerArabicName: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginLeft: 8,
+  },
+  fullRemainingTime: {
+    fontSize: 14,
+    color: '#10b981',
+    marginTop: 4,
+  },
+  fullPrayerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  fullPrayerTimeContainer: {
+    alignItems: 'flex-end',
+  },
+  fullPrayerTime: {
+    fontWeight: '500',
+    color: 'white',
+    fontSize: 16,
+  },
+  fullCompletedText: {
+    fontSize: 12,
+    color: '#10b981',
+  },
+  fullTrackButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#4b5563',
+    backgroundColor: '#334155',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullTrackButtonCompleted: {
+    backgroundColor: '#10b981',
+    borderColor: '#059669',
+  },
+  fullTrackButtonIcon: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

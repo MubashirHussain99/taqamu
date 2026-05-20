@@ -112,7 +112,7 @@
 // export default LocationSearch;
 
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import {
   View,
   Text,
@@ -123,16 +123,44 @@ import {
 } from 'react-native';
 import axios from 'axios';
 
-const LocationSearch = ({onSelect, city, country}) => {
+const LocationSearch = forwardRef(({onSelect, city, country}, ref) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [manuallyTyped, setManuallyTyped] = useState(false);
 
+  const buildDisplayQuery = (cityValue, countryValue) => {
+    if (!cityValue) {
+      return '';
+    }
+    if (
+      !countryValue ||
+      cityValue.toLowerCase().includes(countryValue.toLowerCase())
+    ) {
+      return cityValue;
+    }
+    return `${cityValue}, ${countryValue}`;
+  };
+
+  const parseQuery = text => {
+    if (!text?.trim()) {
+      return {full: '', city: '', country: ''};
+    }
+
+    const parts = text.split(',').map(part => part.trim()).filter(Boolean);
+    const typedCity = parts[0] || '';
+    const typedCountry = parts.length > 1 ? parts[parts.length - 1] : '';
+
+    return {full: text.trim(), city: typedCity, country: typedCountry};
+  };
+
+  useImperativeHandle(ref, () => ({
+    getLocationValues: () => parseQuery(query),
+  }));
+
   // Set initial value from props
   useEffect(() => {
-    if (city && country) {
-      const full = `${city}, ${country}`;
-      setQuery(full);
+    if (city) {
+      setQuery(buildDisplayQuery(city, country));
     }
   }, [city, country]);
 
@@ -188,11 +216,7 @@ const LocationSearch = ({onSelect, city, country}) => {
 
   const handleBlur = () => {
     if (manuallyTyped && query) {
-      // If user typed but didn't select, still notify parent
-      const parts = query.split(',');
-      const typedCity = parts[0]?.trim() || '';
-      const typedCountry = parts.slice(1).join(',').trim() || '';
-      onSelect({full: query, city: typedCity, country: typedCountry});
+      onSelect(parseQuery(query));
       setManuallyTyped(false);
     }
   };
@@ -218,7 +242,7 @@ const LocationSearch = ({onSelect, city, country}) => {
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   input: {

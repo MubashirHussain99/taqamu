@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -9,29 +9,33 @@ import {
   Modal,
   Dimensions,
   Platform,
+  StatusBar,
 } from 'react-native';
-import axios from 'axios';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {api} from '../../services/api/api';
+import {logoutUser} from '../../services/authService';
 import PrayerTimes from '../../components/dashboard/PrayersTime';
 import RandomAyahOfTheDay from '../../components/dashboard/RandomAyahOfTheDay';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 // Note: You'll need to install these dependencies:
 // @react-navigation/native, @react-navigation/stack, react-native-svg, react-native-vector-icons
-import HijriDate from 'hijri-date/lib/safe';
 import DhikrCounter from '../../components/dashboard/DhikrCounter';
+import {DashboardHeader} from '../../components/dashboard/DashboardHeader';
+import {LocationModal} from '../../components/dashboard/LocationModal';
 import CharityCampaign from '../../components/dashboard/CharityCampaign';
 import HadithOfTheDay from '../../components/dashboard/HadithOfTheDaym';
 import SupportGuidance from '../../components/dashboard/SupportGuidance';
-import RootNavigator from '../../components/dashboard/BottomNavigation';
+import RootNavigator, {
+  useBottomTabBarInset,
+} from '../../components/dashboard/BottomNavigation';
 import {Button} from 'react-native';
 import Charity from '../../components/dashboard/Charity';
 import NotificationTester from '../../components/notification_fix/NotificationTester';
-
-const todayHijri = new HijriDate(); // This gives you the current Islamic date
-const hijriDateString = `${todayHijri.getDate()}-${
-  todayHijri.getMonth() + 1
-}-${todayHijri.getFullYear()}`;
+import {APP_BACKGROUND} from '../../styles/screenStyles';
+import {DASHBOARD_HEADER_BACKGROUND} from '../../constants/colors';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {getDailyNotificationCount} from '../../services/notificationHistory';
 
 // Get today's Islamic date
 // const todayHijri = new HijriDate();
@@ -291,56 +295,60 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   // const token = ''; // Get from your auth system
 
+  console.log('profile', profile);
+
   const currentDhikr = dhikrTypes[currentDhikrIndex];
   const {width} = Dimensions.get('window');
   const isTablet = width >= 768;
+  const tabBarInset = useBottomTabBarInset();
+  const insets = useSafeAreaInsets();
   const [showCharity, setShowCharity] = useState(false);
   const [profileTrigger, setProfileTrigger] = useState(true);
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const storedUserString = await AsyncStorage.getItem('user');
+  const [notificationCount, setNotificationCount] = useState(0);
 
-        const storedUser = JSON.parse(storedUserString); // convert to object
-        console.log(storedUser.id, 'storedUser.id');
-        if (!token) {
-          setError('No token found. Please log in again.');
-          return;
-        }
-        const API_URL = Platform.select({
-          android: 'https://taqamu-app-backend.vercel.app/api', // For Android emulator
-          ios: 'https://taqamu-app-backend.vercel.app/api', // For iOS simulator
-          default: 'https://taqamu-app-backend.vercel.app/api', // For other environments
-        });
-
-        const response = await fetch(
-          `${API_URL}/auth/get-user/${storedUser.id}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        const responseText = await response.text();
-
-        if (responseText.startsWith('<')) {
-          throw new Error('Server returned HTML instead of JSON.');
-        }
-
-        const data = JSON.parse(responseText);
-        setProfile(data);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError('Failed to fetch user profile.');
-      }
-    };
-
-    fetchProfile();
+  const refreshNotificationCount = useCallback(async () => {
+    const count = await getDailyNotificationCount();
+    setNotificationCount(count);
   }, []);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const currentUser = auth().currentUser;
+
+      if (!currentUser?.uid) {
+        console.log('No authenticated user yet');
+        return;
+      }
+
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+
+      if (userDoc.exists) {
+        setProfile(userDoc.data());
+      } else {
+        setError('Profile not found in Firestore');
+      }
+    } catch (err) {
+      console.log('Profile Error:', err);
+      setError('Failed to load profile');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [profileTrigger, fetchProfile]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      refreshNotificationCount();
+      const interval = setInterval(refreshNotificationCount, 15000);
+      return () => clearInterval(interval);
+    }, [fetchProfile, refreshNotificationCount]),
+  );
+
   useEffect(() => {
     const fetchAuthData = async () => {
       try {
@@ -409,19 +417,16 @@ const Dashboard = () => {
   //   setIsSidebarOpen(false);
   // };
 
-  const removeUserData = async () => {
-    try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      console.log('User data removed successfully.');
-    } catch (error) {
-      console.error('Error removing user data:', error);
-    }
-  };
   const handleLogout = async () => {
-    await removeUserData();
-    // Navigate to Login screen or handle the logout process
-    navigation.navigate('Login');
+    try {
+      await logoutUser();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Login'}],
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -429,29 +434,6 @@ const Dashboard = () => {
   const handleNext = () => {
     setCurrentIndex(prev => (prev + 1) % hadiths.length);
   };
-
-  function formatCityArea(fullLocation) {
-    if (!fullLocation) return '';
-
-    const parts = fullLocation.split(',').map(p => p.trim());
-
-    // Remove known administrative suffixes
-    const cleanedParts = parts.filter(
-      part =>
-        !/\b(District|Division|County|Province|State|Taluka|City|Region|Ward)\b/i.test(
-          part,
-        ),
-    );
-
-    const area = cleanedParts[0] || '';
-    const city = cleanedParts[1] || '';
-    const country = cleanedParts[cleanedParts.length - 1] || '';
-
-    // Avoid duplicates like "Dublin, Dublin" or "Hyderabad, Hyderabad"
-    const cityPart = area !== city && city ? `${area} ${city}` : area;
-
-    return `${cityPart}, ${country}`;
-  }
 
   function extractCity(fullLocation) {
     if (!fullLocation) return '';
@@ -471,66 +453,53 @@ const Dashboard = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, isTablet && styles.headerTablet]}>
-        <TouchableOpacity
-          onPress={() => setIsSidebarOpen(true)}
-          style={styles.profileImageContainer}>
-          <Image
-            source={{uri: user.profileImage}}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.headerCenter}>
-          <Text style={styles.appName}>
-            {profile?.name.charAt(0).toUpperCase() + profile?.name.slice(1)}
-          </Text>
-
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>
-              {formatCityArea(profile?.city)},{' '}
-              {profile?.country.charAt(0).toUpperCase() +
-                profile?.country.slice(1)}
-            </Text>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('EditProfileScreen', {
-                  profile: profile, // the profile data that was fetched
-                  setProfileTrigger: setProfileTrigger, // passing the trigger state function
-                })
-              }>
-              <Text style={styles.editIcon}>✏️</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Islamic Date */}
-          <Text style={styles.islamicDate}>
-            🕌 Today: {hijriDateString} (Hijri)
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Notifications')}
-          style={styles.notificationIcon}>
-          <Text style={styles.notificationBadge}>2</Text>
-          <Text>🔔</Text>
-        </TouchableOpacity>
+      <View
+        style={[
+          styles.headerWrap,
+          {
+            marginTop: -insets.top,
+            paddingTop: insets.top,
+          },
+        ]}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={DASHBOARD_HEADER_BACKGROUND}
+          translucent={Platform.OS === 'android'}
+        />
+        <DashboardHeader
+          profile={profile}
+          isTablet={isTablet}
+          setProfileTrigger={setProfileTrigger}
+          onOpenLocationModal={() => setShowLocationModal(true)}
+          profileImageUri={user.profileImage}
+          notificationCount={notificationCount}
+        />
       </View>
 
       <ScrollView
+        style={{flex: 1}}
         contentContainerStyle={[
           styles.content,
           isTablet && styles.contentTablet,
+          {paddingBottom: tabBarInset},
         ]}>
         {/* <NotificationTester /> */}
         {/* Prayer Times - Implement as separate component */}
-        <PrayerTimes
+        {/* <PrayerTimes
           // city={profile?.city}
           city={extractCity(profile?.city)}
           country={profile?.country}
           variant="compact"
-        />
+        /> */}
+
+        {profile?.city && profile?.country && (
+          <PrayerTimes
+            key={`${profile.city}|${profile.country}`}
+            city={profile.city}
+            country={profile.country}
+            variant="compact"
+          />
+        )}
 
         {/* Feature Icons */}
         <View style={[styles.section, isTablet && styles.sectionTablet]}>
@@ -645,7 +614,7 @@ const Dashboard = () => {
             </View>
 
             {/* Implement DhikrCounter component */}
-            <View style={{width: '50%'}}>
+            <View style={styles.dhikrCounterWrapper}>
               <DhikrCounter
                 dhikrType={currentDhikr.name}
                 arabicText={currentDhikr.arabic}
@@ -804,16 +773,16 @@ const Dashboard = () => {
         </View>
       </Modal>
 
-      {/* Location Modal - Implement as separate component */}
-      {/* <LocationModal
-        isOpen={showLocationModal}
+      <LocationModal
+        visible={showLocationModal}
         onClose={() => setShowLocationModal(false)}
-        currentLocation={userLocation}
-        onLocationSelect={(location) => {
-          setUserLocation(location);
+        profile={profile}
+        setProfileTrigger={setProfileTrigger}
+        onLocationSelect={({city: newCity, country: newCountry}) => {
+          setUserLocation(`${newCity}, ${newCountry}`);
           setShowLocationModal(false);
         }}
-      /> */}
+      />
 
       {/* Bottom Navigation - Implement as separate component */}
       <RootNavigator />
@@ -822,90 +791,22 @@ const Dashboard = () => {
 };
 
 const styles = StyleSheet.create({
+  headerWrap: {
+    backgroundColor: DASHBOARD_HEADER_BACKGROUND,
+    zIndex: 10,
+    ...Platform.select({
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
   container: {
     flex: 1,
-    backgroundColor: '#0f172a', // slate-950 equivalent
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#1e293b', // slate-900/50 equivalent
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155', // slate-700 equivalent
-  },
-  headerTablet: {
-    paddingHorizontal: 32,
-    paddingVertical: 24,
-  },
-  profileImageContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1e293b', // slate-800 equivalent
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  islamicDate: {
-    marginTop: 4,
-    fontSize: 14,
-    color: '#fff',
-  },
-
-  appName: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: 'white',
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  locationText: {
-    color: 'white',
-    fontSize: 12,
-    width: '70%',
-    textAlign: 'center',
-  },
-  editIcon: {
-    marginLeft: 4,
-    color: '#10b981', // emerald-500 equivalent
-  },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1e293b', // slate-800 equivalent
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#ef4444', // red-500 equivalent
-    color: 'white',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontSize: 12,
+    backgroundColor: APP_BACKGROUND,
   },
   content: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 16,
   },
   contentTablet: {
     paddingHorizontal: 32,
@@ -913,6 +814,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+    // borderWidth: 1,
   },
   sectionTablet: {
     marginBottom: 32,
@@ -952,8 +854,8 @@ const styles = StyleSheet.create({
   featureIcon: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(241, 245, 249, 0.1)', // slate-100/10 equivalent
+    borderRadius: 50,
+    backgroundColor: '#0d4236', // slate-100/10 equivalent
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -998,7 +900,7 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     width: '48%',
-    backgroundColor: '#1e293b', // slate-800 equivalent
+    backgroundColor: '#0d4236', // slate-800 equivalent
     borderWidth: 1,
     borderColor: '#334155', // slate-700 equivalent
     borderRadius: 12,
@@ -1029,19 +931,25 @@ const styles = StyleSheet.create({
   },
   dhikrContainer: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+  },
+  dhikrCounterWrapper: {
+    width: '47%',
+    alignSelf: 'stretch',
   },
   dhikrContainerTablet: {
     gap: 24,
   },
   streakCard: {
-    flex: 1,
-    backgroundColor: '#1e293b', // slate-800 equivalent
+    backgroundColor: '#0d4236', // slate-800 equivalent
     borderWidth: 1,
     borderColor: '#334155', // slate-700 equivalent
     borderRadius: 12,
     padding: 16,
-    width: '50%',
+    width: '47%',
+    minHeight: 200,
+    justifyContent: 'space-between',
   },
   streakCardTablet: {
     padding: 20,
@@ -1077,6 +985,7 @@ const styles = StyleSheet.create({
   },
   charityGrid: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     gap: 12,
     marginTop: 12,
     width: '100%',
@@ -1086,7 +995,7 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     flex: 1,
-    backgroundColor: '#1e293b', // slate-800 equivalent
+    backgroundColor: '#0d4236', // slate-800 equivalent
     padding: 16,
   },
   sidebarTablet: {

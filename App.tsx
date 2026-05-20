@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import Routes from './src/navigations/Routes';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { APP_BACKGROUND } from './src/constants/colors';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -24,12 +25,24 @@ const App = () => {
     };
   }, []);
 
+  const navTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: APP_BACKGROUND,
+    },
+  };
+
   return (
-    <SafeAreaView style={{ height: hp(100), width: wp(100) }}>
-      <NavigationContainer>
-        <Routes />
-      </NavigationContainer>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView
+        style={{ height: hp(100), width: wp(100), backgroundColor: APP_BACKGROUND }}
+        edges={['top', 'left', 'right']}>
+        <NavigationContainer theme={navTheme}>
+          <Routes />
+        </NavigationContainer>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

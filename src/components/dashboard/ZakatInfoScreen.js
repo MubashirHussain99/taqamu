@@ -1,28 +1,29 @@
 import React from 'react';
-import { ScrollView, Text, StyleSheet, Linking,TouchableOpacity } from 'react-native';
-// import { TouchableOpacity } from 'react-native-gesture-handler';
+import {View, Text, StyleSheet, Linking, TouchableOpacity} from 'react-native';
 
-const ZakatInfoScreen = () => {
+const ZakatInfoContent = () => {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>About Zakat</Text>
-      
+    <View style={styles.infoSection}>
       <Text style={styles.sectionTitle}>What is Zakat?</Text>
       <Text style={styles.text}>
-        Zakat is the third pillar of Islam and an obligatory act of worship. It requires Muslims to donate a portion of their wealth to those in need.
+        Zakat is the third pillar of Islam and an obligatory act of worship. It
+        requires Muslims to donate a portion of their wealth to those in need.
       </Text>
-      
+
       <Text style={styles.sectionTitle}>Zakat Rules</Text>
       <Text style={styles.text}>
-        • You must pay Zakat if your wealth exceeds the Nisab threshold for one lunar year
+        • You must pay Zakat if your wealth exceeds the Nisab threshold for one
+        lunar year
         {'\n'}• The current rate is 2.5% of your total eligible wealth
-        {'\n'}• Zakat is payable on gold, silver, cash, investments, and business assets
+        {'\n'}• Zakat is payable on gold, silver, cash, investments, and
+        business assets
         {'\n'}• Debts can be deducted from your total wealth
       </Text>
-      
+
       <Text style={styles.sectionTitle}>Who Receives Zakat?</Text>
       <Text style={styles.text}>
-        Zakat can be given to 8 categories of people mentioned in the Quran (9:60):
+        Zakat can be given to 8 categories of people mentioned in the Quran
+        (9:60):
         {'\n'}1. The poor
         {'\n'}2. The needy
         {'\n'}3. Those employed to administer Zakat
@@ -32,54 +33,44 @@ const ZakatInfoScreen = () => {
         {'\n'}7. In the cause of Allah
         {'\n'}8. The wayfarer
       </Text>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.linkButton}
-        onPress={() => Linking.openURL('https://islamic-relief.org/zakat/')}
-      >
+        onPress={() => Linking.openURL('https://islamic-relief.org/zakat/')}>
         <Text style={styles.linkText}>Learn More About Zakat</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: '#0f172a',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-    textAlign: 'center',
+  infoSection: {
+    marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ccc',
-    marginTop: 15,
-    marginBottom: 10,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#a7f3d0',
+    marginTop: 16,
+    marginBottom: 8,
   },
   text: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#ccc',
-    marginBottom: 10,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#cbd5e1',
   },
   linkButton: {
     marginTop: 20,
-    padding: 15,
-    backgroundColor: '#27ae60',
-    borderRadius: 5,
+    padding: 14,
+    backgroundColor: '#10b981',
+    borderRadius: 10,
     alignItems: 'center',
   },
   linkText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
 
-export default ZakatInfoScreen;
+export default ZakatInfoContent;

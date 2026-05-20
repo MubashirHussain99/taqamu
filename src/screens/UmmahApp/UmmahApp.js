@@ -13,16 +13,40 @@ import {
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {Image} from 'react-native-svg';
+import {Image} from 'react-native';
+import RootNavigator, {
+  useBottomTabBarInset,
+} from '../../components/dashboard/BottomNavigation';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const Tab = createBottomTabNavigator();
 
 const UmmahApp = () => {
+  const navigation = useNavigation();
+
   return (
     <SafeAreaView style={styles.container}>
-      <Tab.Navigator
-        screenOptions={({route}) => ({
-          tabBarIcon: ({focused, color, size}) => {
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          accessibilityLabel="Go back">
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerText}>Ummah</Text>
+          <Text style={styles.headerSubtitle}>
+            Forums · Groups · People
+          </Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <View style={styles.tabArea}>
+        <Tab.Navigator
+          style={styles.tabNavigator}
+          screenOptions={({route}) => ({
+          tabBarIcon: ({color, size}) => {
             let iconName;
 
             if (route.name === 'Forums') {
@@ -35,14 +59,18 @@ const UmmahApp = () => {
 
             return <Icon name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: '#4CAF50',
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: '#10b981',
+          tabBarInactiveTintColor: '#94a3b8',
+          tabBarStyle: styles.tabBar,
           headerShown: false,
         })}>
         <Tab.Screen name="Forums" component={ForumsScreen} />
         <Tab.Screen name="Groups" component={GroupsScreen} />
         <Tab.Screen name="People" component={PeopleScreen} />
       </Tab.Navigator>
+      </View>
+
+      <RootNavigator />
     </SafeAreaView>
   );
 };
@@ -331,7 +359,7 @@ const CreateForumModal = ({visible, onClose, onCreate}) => {
 };
 
 const PeopleScreen = () => {
-  const navigation = useNavigation();
+  const tabBarInset = useBottomTabBarInset();
   const [activeTab, setActiveTab] = useState('Everyone');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -494,29 +522,15 @@ const PeopleScreen = () => {
 
   return (
     <View style={styles.screenContainer}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 16,
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.createButtonText}>❌</Text>
-        </TouchableOpacity>
-        <Text style={styles.screenTitle}>Ummah</Text>
-        {/* Empty space to balance the layout */}
-        <Text style={styles.screenTitle}> </Text>
-      </View>
-
       <View style={styles.searchContainer}>
         <Image
-          source={require('../../assets/images/SearchIcon.png')} // 🔁 adjust the path to your actual image file
-          style={{width: 12, height: 24, marginRight: 8}}
+          source={require('../../assets/images/SearchIcon.png')}
+          style={styles.searchIcon}
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search forums, groups or people..."
+          placeholder="Search people..."
+          placeholderTextColor="#64748b"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -537,6 +551,10 @@ const PeopleScreen = () => {
       </View>
 
       <FlatList
+        contentContainerStyle={[
+          styles.listContent,
+          {paddingBottom: 24 + tabBarInset},
+        ]}
         data={peopleData[activeTab]}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
@@ -593,7 +611,7 @@ const PeopleScreen = () => {
 };
 
 const GroupsScreen = () => {
-  const navigation = useNavigation();
+  const tabBarInset = useBottomTabBarInset();
   const [activeTab, setActiveTab] = useState('All Groups');
   const [searchQuery, setSearchQuery] = useState('');
   const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
@@ -687,29 +705,15 @@ const GroupsScreen = () => {
 
   return (
     <View style={styles.screenContainer}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 16,
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.createButtonText}>❌</Text>
-        </TouchableOpacity>
-        <Text style={styles.screenTitle}>Ummah</Text>
-        {/* Empty space to balance the layout */}
-        <Text style={styles.screenTitle}> </Text>
-      </View>
-
       <View style={styles.searchContainer}>
         <Image
-          source={require('../../assets/images/SearchIcon.png')} // 🔁 adjust the path to your actual image file
-          style={{width: 12, height: 24, marginRight: 8}}
+          source={require('../../assets/images/SearchIcon.png')}
+          style={styles.searchIcon}
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search forums, groups or people..."
+          placeholder="Search groups..."
+          placeholderTextColor="#64748b"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -732,6 +736,10 @@ const GroupsScreen = () => {
       </View>
 
       <FlatList
+        contentContainerStyle={[
+          styles.listContent,
+          {paddingBottom: 24 + tabBarInset},
+        ]}
         data={groupsData.filter(
           group =>
             activeTab === 'All Groups' ||
@@ -792,7 +800,7 @@ const GroupsScreen = () => {
 };
 
 const ForumsScreen = () => {
-  const navigation = useNavigation();
+  const tabBarInset = useBottomTabBarInset();
   const [searchQuery, setSearchQuery] = useState('');
   const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
   const [forumsData, setForumsData] = useState([
@@ -842,55 +850,44 @@ const ForumsScreen = () => {
     },
   ]);
   const handleCreateForum = newForum => {
-  const newId = (forumsData.length + 1).toString();
+    const newId = (forumsData.length + 1).toString();
 
-  setForumsData(prev => [
-    ...prev,
-    {
-      id: newId,
-      title: newForum.title,
-      description: newForum.description,
-      stats: '0',
-      posts: '0 posts',
-      time: 'Just now',
-    },
-  ]);
+    setForumsData(prev => [
+      ...prev,
+      {
+        id: newId,
+        title: newForum.title,
+        description: newForum.description,
+        stats: '0',
+        posts: '0 posts',
+        time: 'Just now',
+      },
+    ]);
 
-  Alert.alert('Success', 'Forum created successfully!');
-};
-
+    Alert.alert('Success', 'Forum created successfully!');
+  };
 
   return (
     <View style={styles.screenContainer}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 16,
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.createButtonText}>❌</Text>
-        </TouchableOpacity>
-        <Text style={styles.screenTitle}>Ummah</Text>
-        {/* Empty space to balance the layout */}
-        <Text style={styles.screenTitle}> </Text>
-      </View>
-
       <View style={styles.searchContainer}>
         <Image
-          source={require('../../assets/images/SearchIcon.png')} // 🔁 adjust the path to your actual image file
-          style={{width: 24, height: 24, marginRight: 8}}
+          source={require('../../assets/images/SearchIcon.png')}
+          style={styles.searchIcon}
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search forums, groups or people..."
+          placeholder="Search forums..."
+          placeholderTextColor="#64748b"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
       <FlatList
+        contentContainerStyle={[
+          styles.listContent,
+          {paddingBottom: 24 + tabBarInset},
+        ]}
         data={forumsData}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
@@ -923,40 +920,86 @@ const ForumsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: APP_BACKGROUND,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+  backButton: {
+    padding: 8,
+    width: 40,
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#fff',
+    lineHeight: 28,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#a7f3d0',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  tabArea: {
+    flex: 1,
+    minHeight: 0,
+  },
+  tabNavigator: {
+    flex: 1,
+  },
+  tabBar: {
+    backgroundColor: APP_BACKGROUND,
+    borderTopColor: '#0d3d33',
   },
   screenContainer: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#0f172a',
+    backgroundColor: APP_BACKGROUND,
   },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#fff',
+  listContent: {
+    paddingBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ecfdf5',
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
   },
   searchIcon: {
+    width: 20,
+    height: 20,
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
     height: 40,
-    color: '#fff',
+    color: '#0f172a',
   },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#fff',
+    borderBottomColor: '#a7f3d0',
   },
   tab: {
     paddingVertical: 8,
@@ -968,13 +1011,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginRight: 8,
     borderBottomWidth: 2,
-    borderBottomColor: '#4CAF50',
+    borderBottomColor: '#10b981',
   },
   tabText: {
-    color: '#fff',
+    color: '#d1fae5',
   },
   activeTabText: {
-    color: '#4CAF50',
+    color: '#10b981',
     fontWeight: 'bold',
   },
   forumItem: {
@@ -1168,9 +1211,9 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#4CAF50',
+    bottom: 16,
+    right: 16,
+    backgroundColor: '#10b981',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 24,

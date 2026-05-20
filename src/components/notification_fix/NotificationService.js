@@ -6,6 +6,7 @@ import notifee, {
   TriggerType,
 } from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
+import {recordPrayerAlert} from '../../services/notificationHistory';
 
 // Request notification permissions
 const requestPermission = async () => {
@@ -121,9 +122,12 @@ const initializeNotificationService = async () => {
 
   const unsubscribe = messaging().onMessage(async remoteMessage => {
     if (remoteMessage.notification) {
+      const title = remoteMessage.notification.title || 'Notification';
+      const body = remoteMessage.notification.body || '';
+
       await notifee.displayNotification({
-        title: remoteMessage.notification.title,
-        body: remoteMessage.notification.body,
+        title,
+        body,
         android: {
           channelId: 'prayer-times',
           importance: AndroidImportance.HIGH,
@@ -134,6 +138,9 @@ const initializeNotificationService = async () => {
           sound: 'adhan.mp3',
         },
       });
+
+      const prayerName = title.replace(/ Prayer Time/i, '').trim();
+      await recordPrayerAlert(prayerName || 'Prayer', body);
     }
   });
 

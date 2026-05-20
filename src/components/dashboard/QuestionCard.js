@@ -45,18 +45,14 @@
 
 // export default QuestionCard;
 
-
-
 // QuestionCard.js
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
 
-const QuestionCard = ({ title, icon, onPress }) => {
+const QuestionCard = ({title, icon, onPress}) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.card}>
-      <View style={styles.iconContainer}>
-        {icon}
-      </View>
+      <View style={styles.iconContainer}>{icon}</View>
       <Text style={styles.title}>{title}</Text>
     </TouchableOpacity>
   );
@@ -66,14 +62,14 @@ const styles = StyleSheet.create({
   card: {
     width: '48%',
     // backgroundColor: '#4A6FA5',
-    backgroundColor: '#292655',
+    backgroundColor: '#0d4236',
     borderRadius: 10,
     padding: 16,
     marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,

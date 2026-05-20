@@ -9,13 +9,15 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
-import ZakatInfoScreen from '../../components/dashboard/ZakatInfoScreen';
+import ZakatInfoContent from '../../components/dashboard/ZakatInfoScreen';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const ZakatScreen = () => {
   const isTablet = Dimensions.get('window').width >= 768;
   const navigation = useNavigation();
-  // State for all input values
+
   const [inputs, setInputs] = useState({
     gold: '',
     silver: '',
@@ -23,29 +25,22 @@ const ZakatScreen = () => {
     investments: '',
     businessAssets: '',
     debts: '',
-    nisabMethod: 'gold', // 'gold' or 'silver'
+    nisabMethod: 'gold',
   });
 
-  // Zakat rates and nisab values
   const zakatRates = {
-    goldRate: 230000, // Current gold rate per tola (update this)
-    silverRate: 2600, // Current silver rate per tola (update this)
-    goldNisab: 7.5, // 7.5 tola gold
-    silverNisab: 52.5, // 52.5 tola silver
-    zakatPercentage: 2.5, // 2.5%
+    goldRate: 230000,
+    silverRate: 2600,
+    goldNisab: 7.5,
+    silverNisab: 52.5,
+    zakatPercentage: 2.5,
   };
 
-  // Handle input changes
   const handleInputChange = (name, value) => {
-    // Remove non-numeric characters except decimal point
     const numericValue = value.replace(/[^0-9.]/g, '');
-    setInputs({
-      ...inputs,
-      [name]: numericValue,
-    });
+    setInputs(prev => ({...prev, [name]: numericValue}));
   };
 
-  // Calculate total wealth
   const calculateTotalWealth = () => {
     const {gold, silver, cash, investments, businessAssets, debts} = inputs;
 
@@ -60,25 +55,21 @@ const ZakatScreen = () => {
     return Math.max(0, totalAssets - totalDebts);
   };
 
-  // Check if wealth meets nisab
   const meetsNisab = () => {
     const totalWealth = calculateTotalWealth();
     const {goldNisab, silverNisab, goldRate, silverRate} = zakatRates;
 
     if (inputs.nisabMethod === 'gold') {
       return totalWealth >= goldNisab * goldRate;
-    } else {
-      return totalWealth >= silverNisab * silverRate;
     }
+    return totalWealth >= silverNisab * silverRate;
   };
 
-  // Calculate zakat amount
   const calculateZakat = () => {
     if (!meetsNisab()) return 0;
     return (calculateTotalWealth() * zakatRates.zakatPercentage) / 100;
   };
 
-  // Format currency
   const formatCurrency = amount => {
     return amount.toLocaleString('en-PK', {
       style: 'currency',
@@ -87,7 +78,6 @@ const ZakatScreen = () => {
     });
   };
 
-  // Handle calculate button press
   const handleCalculate = () => {
     if (!calculateTotalWealth()) {
       Alert.alert('Error', 'Please enter at least one asset value');
@@ -104,14 +94,10 @@ const ZakatScreen = () => {
         (nisabMet
           ? `Zakat Due: ${formatCurrency(zakatAmount)}`
           : 'You are not required to pay Zakat as your wealth does not meet the Nisab threshold.'),
-      [
-        {text: 'OK', onPress: () => console.log('OK Pressed')},
-        {text: 'Learn More', onPress: () => navigation.navigate('ZakatInfo')},
-      ],
+      [{text: 'OK'}],
     );
   };
 
-  // Input field component
   const InputField = ({label, name, placeholder}) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>{label}</Text>
@@ -121,96 +107,203 @@ const ZakatScreen = () => {
         value={inputs[name]}
         onChangeText={text => handleInputChange(name, text)}
         keyboardType="numeric"
-        placeholderTextColor="#999"
+        placeholderTextColor="#64748b"
       />
     </View>
   );
 
+  const nisabThreshold =
+    inputs.nisabMethod === 'gold'
+      ? formatCurrency(zakatRates.goldNisab * zakatRates.goldRate)
+      : formatCurrency(zakatRates.silverNisab * zakatRates.silverRate);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={{fontSize: 16, fontWeight: '600', color: '#fff'}}>
-            ❌
-          </Text>
+          accessibilityLabel="Go back">
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.header, isTablet && styles.headerTablet]}>
-          Zakat
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerText, isTablet && styles.headerTextTablet]}>
+            Zakat Calculator
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            2.5% on eligible wealth above Nisab
+          </Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
-      <ZakatInfoScreen />
-      
-    </ScrollView>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}>
+        <View style={[styles.card, isTablet && styles.cardTablet]}>
+          <Text style={styles.cardTitle}>Your Assets</Text>
+          <InputField
+            label="Gold (tola)"
+            name="gold"
+            placeholder="e.g. 10"
+          />
+          <InputField
+            label="Silver (tola)"
+            name="silver"
+            placeholder="e.g. 50"
+          />
+          <InputField
+            label="Cash (PKR)"
+            name="cash"
+            placeholder="e.g. 500000"
+          />
+          <InputField
+            label="Investments (PKR)"
+            name="investments"
+            placeholder="e.g. 200000"
+          />
+          <InputField
+            label="Business Assets (PKR)"
+            name="businessAssets"
+            placeholder="e.g. 100000"
+          />
+          <InputField
+            label="Debts to Deduct (PKR)"
+            name="debts"
+            placeholder="e.g. 50000"
+          />
+        </View>
+
+        <View style={[styles.card, isTablet && styles.cardTablet]}>
+          <Text style={styles.cardTitle}>Nisab Method</Text>
+          <View style={styles.radioContainer}>
+            {['gold', 'silver'].map(method => (
+              <TouchableOpacity
+                key={method}
+                style={styles.radioButton}
+                onPress={() =>
+                  setInputs(prev => ({...prev, nisabMethod: method}))
+                }>
+                <View style={styles.radioCircle}>
+                  {inputs.nisabMethod === method && (
+                    <View style={styles.selectedRb} />
+                  )}
+                </View>
+                <Text style={styles.radioText}>
+                  {method === 'gold' ? 'Gold Nisab (7.5 tola)' : 'Silver Nisab (52.5 tola)'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.nisabInfo}>
+            Current threshold: {nisabThreshold}
+          </Text>
+        </View>
+
+        <TouchableOpacity style={styles.calculateButton} onPress={handleCalculate}>
+          <Text style={styles.calculateButtonText}>Calculate Zakat</Text>
+        </TouchableOpacity>
+
+        <View style={[styles.card, isTablet && styles.cardTablet]}>
+          <Text style={styles.cardTitle}>About Zakat</Text>
+          <ZakatInfoContent />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#0f172a',
+    flex: 1,
+    backgroundColor: APP_BACKGROUND,
+  },
+  scrollView: {
+    flex: 1,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   backButton: {
-    marginRight: 15,
+    padding: 8,
+    width: 40,
   },
-  scrollContainer: {
-    paddingBottom: 30,
+  backButtonText: {
+    fontSize: 28,
+    color: '#fff',
+    lineHeight: 28,
   },
-  header: {
-    fontSize: 24,
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    flex: 1,
+    textAlign: 'center',
   },
-  headerTablet: {
-    fontSize: 32,
+  headerTextTablet: {
+    fontSize: 28,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#a7f3d0',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#0d4236',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  cardTablet: {
+    padding: 20,
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#3498db',
-    marginBottom: 15,
+    fontWeight: '700',
+    color: '#a7f3d0',
+    marginBottom: 14,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 5,
+    borderBottomColor: 'rgba(167, 243, 208, 0.2)',
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 14,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
-    marginBottom: 5,
+    color: '#94a3b8',
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
+    borderColor: '#334155',
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
-    color: '#2c3e50',
+    color: '#f8fafc',
+    backgroundColor: 'rgba(15, 23, 42, 0.35)',
   },
   radioContainer: {
-    marginBottom: 15,
+    marginBottom: 8,
   },
   radioButton: {
     flexDirection: 'row',
@@ -222,7 +315,7 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#3498db',
+    borderColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -231,40 +324,29 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#3498db',
+    backgroundColor: '#10b981',
   },
   radioText: {
-    fontSize: 16,
-    color: '#2c3e50',
+    fontSize: 15,
+    color: '#e2e8f0',
   },
   nisabInfo: {
     fontSize: 14,
-    color: '#27ae60',
+    color: '#6ee7b7',
     fontStyle: 'italic',
-    marginTop: 5,
+    marginTop: 4,
   },
   calculateButton: {
-    backgroundColor: '#27ae60',
-    padding: 15,
-    borderRadius: 5,
+    backgroundColor: '#10b981',
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   calculateButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  infoButton: {
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  infoButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
   },
 });
 

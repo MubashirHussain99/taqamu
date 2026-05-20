@@ -1,33 +1,41 @@
 // screens/SplashScreen.js
+
 import React, {useEffect} from 'react';
-import {View, ActivityIndicator} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {View} from 'react-native';
+import {waitForInitialAuth} from '../../services/authService';
+import {screenStyles} from '../../styles/screenStyles';
+import MainLogo from '../../assets/svg/MainLogo';
 
 const SplashScreen = ({navigation}) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
-        console.log('Token from storage:', token);
-        setTimeout(() => {
-          if (token) {
-            navigation.replace('Dashboard');
-          } else {
-            navigation.replace('Login');
-          }
-        }, 2000); // 2-second splash delay
+        const [authState] = await Promise.all([
+          waitForInitialAuth(),
+          new Promise(resolve => setTimeout(resolve, 1500)),
+        ]);
+
+        navigation.replace(authState.isLoggedIn ? 'Dashboard' : 'Login');
       } catch (error) {
-        console.error('Error checking token:', error);
+        console.error('Error checking auth:', error);
         navigation.replace('Login');
       }
     };
 
     checkAuth();
-  }, []);
+  }, [navigation]);
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <ActivityIndicator size="large" color="#0000ff" />
+    <View
+      style={[
+        screenStyles.container,
+        {
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#000', // optional
+        },
+      ]}>
+      <MainLogo width={220} height={80} />
     </View>
   );
 };

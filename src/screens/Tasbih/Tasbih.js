@@ -197,7 +197,7 @@
 // // const styles = StyleSheet.create({
 // //   container: {
 // //     flex: 1,
-// //     backgroundColor: '#0f172a',
+// //     backgroundColor: APP_BACKGROUND,
 // //   },
 // //   headerContainer: {
 // //     flexDirection: 'row',
@@ -225,7 +225,7 @@
 // //   //   justifyContent: 'space-between',
 // //   //   alignItems: 'center',
 // //   //   // padding: 6,
-// //   //   backgroundColor: '#0f172a',
+// //   //   backgroundColor: '#155c4b',
 // //   //   borderBottomWidth: 1,
 // //   //   borderBottomColor: '#ddd',
 // //   // },
@@ -252,7 +252,7 @@
 // //     justifyContent: 'space-between',
 // //     alignItems: 'center',
 // //     padding: 15,
-// //     backgroundColor: '#0f172a',
+// //     backgroundColor: APP_BACKGROUND,
 // //   },
 // //   totalCountText: {
 // //     fontSize: 18,
@@ -627,7 +627,7 @@
 //     justifyContent: 'space-between',
 //     alignItems: 'center',
 //     padding: 15,
-//     backgroundColor: '#0f172a',
+//     backgroundColor: APP_BACKGROUND,
 //   },
 //   totalCountText: {fontSize: 18, fontWeight: 'bold', color: '#fff'},
 //   submitButton: {
@@ -656,7 +656,7 @@
 //   },
 //   counterText: {fontSize: 16, marginRight: 10},
 //   counterButton: {
-//     backgroundColor: '#0f172a',
+//     backgroundColor: APP_BACKGROUND,
 //     padding: 8,
 //     marginRight: 10,
 //     borderRadius: 5,
@@ -683,7 +683,7 @@
 //     height: 40,
 //   },
 //   addButton: {
-//     backgroundColor: '#0f172a',
+//     backgroundColor: APP_BACKGROUND,
 //     borderColor: '#0f172a',
 //     borderWidth: 1,
 //     paddingHorizontal: 15,
@@ -720,7 +720,9 @@ import {
   TextInput,
   Dimensions,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const TOTAL_SURAH = 114;
 
@@ -904,26 +906,35 @@ const Tasbih = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={{fontSize: 16, fontWeight: '600', color: '#fff'}}>
-            ❌
-          </Text>
+          accessibilityLabel="Go back">
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.header, isTablet && styles.headerTablet]}>
-          Tasbih
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text
+            style={[styles.headerText, isTablet && styles.headerTextTablet]}>
+            Tasbih
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {tasbihData.length} phrases · Total {totalCount}
+          </Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.totalCountContainer}>
-        <Text style={styles.totalCountText}>Total: {totalCount}</Text>
-        {submitEnabled && (
+        {submitEnabled ? (
           <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Submit</Text>
+            <Text style={styles.submitButtonText}>Submit progress</Text>
           </TouchableOpacity>
+        ) : (
+          <Text style={styles.totalCountHint}>
+            Tap + on each phrase to count your dhikr
+          </Text>
         )}
       </View>
 
@@ -931,7 +942,7 @@ const Tasbih = () => {
         <TextInput
           style={styles.input}
           placeholder="Add your custom Tasbih"
-          placeholderTextColor="#ccc"
+          placeholderTextColor="#94a3b8"
           value={newTasbih}
           onChangeText={setNewTasbih}
         />
@@ -940,23 +951,31 @@ const Tasbih = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={{paddingHorizontal: 10, marginBottom: 10}}>
+      <View style={styles.quranButtonWrap}>
         <TouchableOpacity
           onPress={addQuranTasbih}
-          style={[styles.addButton, {backgroundColor: 'green'}]}
+          style={styles.quranButton}
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Add Quran Tasbih</Text>
+            <Text style={styles.buttonText}>Add Quran Ayah</Text>
           )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.tasbihList}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.tasbihList}
+        showsVerticalScrollIndicator={false}>
         {tasbihData.map(item => (
-          <View key={item.id} style={styles.tasbihItem}>
-            <Text style={styles.tasbihText}>{item.arabic}</Text>
+          <View
+            key={item.id}
+            style={[styles.tasbihItem, isTablet && styles.tasbihItemTablet]}>
+            <Text
+              style={[styles.tasbihText, isTablet && styles.tasbihTextTablet]}>
+              {item.arabic}
+            </Text>
             {item.english ? (
               <Text style={styles.englishText}>{item.english}</Text>
             ) : null}
@@ -981,141 +1000,198 @@ const Tasbih = () => {
             </View>
           </View>
         ))}
-      </ScrollView>
 
-      <TouchableOpacity
-        onPress={resetAllCounts}
-        style={styles.globalResetButton}>
-        <Text style={styles.globalResetButtonText}>Reset All</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={resetAllCounts}
+          style={styles.globalResetButton}>
+          <Text style={styles.globalResetButtonText}>Reset All</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: APP_BACKGROUND,
+  },
+  scrollView: {
+    flex: 1,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 30,
-    paddingBottom: 10,
-    backgroundColor: '#1e293b',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   backButton: {
-    marginRight: 15,
-    padding: 6,
+    padding: 8,
+    width: 40,
   },
-  header: {
-    fontSize: 24,
+  backButtonText: {
+    fontSize: 28,
+    color: '#fff',
+    lineHeight: 28,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
   },
-  headerTablet: {
-    fontSize: 36,
+  headerTextTablet: {
+    fontSize: 28,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#a7f3d0',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
   },
   totalCountContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    marginVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  totalCountText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#facc15',
+  totalCountHint: {
+    fontSize: 14,
+    color: '#a7f3d0',
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: '#059669',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignSelf: 'stretch',
+    alignItems: 'center',
   },
   submitButtonText: {
-    color: 'white',
+    color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   inputContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     marginBottom: 10,
   },
   input: {
     flex: 1,
-    borderColor: '#555',
+    borderColor: '#0d4236',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    color: 'white',
-    height: 40,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: '#fff',
+    backgroundColor: '#0d4236',
+    height: 44,
   },
   addButton: {
-    backgroundColor: '#0f172a',
-    borderColor: '#0f172a',
-    borderWidth: 1,
-    paddingHorizontal: 15,
-    justifyContent: 'center',
+    backgroundColor: '#0d4236',
+    paddingHorizontal: 16,
     marginLeft: 10,
-    borderRadius: 8,
-    flexDirection: 'row',
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 40,
+    height: 44,
   },
-  buttonText: {color: 'white', fontWeight: 'bold', fontSize: 18},
+  quranButtonWrap: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  quranButton: {
+    backgroundColor: '#0d4236',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   tasbihList: {
-    paddingHorizontal: 10,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   tasbihItem: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#0d4236',
     marginBottom: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: {width: 0, height: 2},
+  },
+  tasbihItemTablet: {
+    padding: 20,
   },
   tasbihText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fbbf24',
+    color: '#f59e0b',
+    textAlign: 'right',
+  },
+  tasbihTextTablet: {
+    fontSize: 28,
   },
   englishText: {
     fontSize: 14,
-    fontStyle: 'italic',
-    color: '#ddd',
-    marginTop: 4,
+    color: '#d1fae5',
+    marginTop: 6,
     marginBottom: 8,
+    lineHeight: 20,
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 8,
   },
-  counterText: {fontSize: 16, marginRight: 10, color: 'white'},
-  counterButton: {
-    backgroundColor: '#0f172a',
-    padding: 8,
+  counterText: {
+    fontSize: 16,
     marginRight: 10,
-    borderRadius: 5,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  counterButton: {
+    backgroundColor: APP_BACKGROUND,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 10,
+    borderRadius: 8,
   },
   resetButton: {
-    backgroundColor: '#b71c1c',
-    padding: 8,
-    borderRadius: 5,
-  },
-  disabledButton: {backgroundColor: '#888'},
-  globalResetButton: {
-    backgroundColor: '#b71c1c',
-    margin: 15,
-    paddingVertical: 12,
+    backgroundColor: '#b91c1c',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#64748b',
+  },
+  globalResetButton: {
+    backgroundColor: '#b91c1c',
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: 'center',
   },
   globalResetButtonText: {
-    color: 'white',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },

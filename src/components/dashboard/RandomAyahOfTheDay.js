@@ -225,7 +225,7 @@
 //     elevation: 3,
 //   },
 //   darkCard: {
-//     backgroundColor: '#1e1b4b',
+//     backgroundColor: '#155c4b',
 //   },
 //   lightCard: {
 //     backgroundColor: '#f4f1ff',
@@ -275,18 +275,23 @@
 
 // export default RandomAyahOfTheDay;
 
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import quranData from '../quran/quran.json'; // Import your quran.json file here
 
-const RandomAyahOfTheDay = ({ variant = 'light' }) => {
+const RandomAyahOfTheDay = ({variant = 'light'}) => {
   const [isRead, setIsRead] = useState(false);
   const [mockVerse, setMockVerse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const getRandomInt = (max) => {
+  const getRandomInt = max => {
     return Math.floor(Math.random() * max);
   };
 
@@ -354,7 +359,9 @@ const RandomAyahOfTheDay = ({ variant = 'light' }) => {
   };
 
   const getNextVerse = () => {
-    const prevKey = mockVerse ? `${mockVerse.surahName}-${mockVerse.arabicText}` : '';
+    const prevKey = mockVerse
+      ? `${mockVerse.surahName}-${mockVerse.arabicText}`
+      : '';
     setIsRead(false); // Reset read status first
     fetchRandomVerse(prevKey); // Pass previous key to avoid repetition
   };
@@ -365,15 +372,13 @@ const RandomAyahOfTheDay = ({ variant = 'light' }) => {
         style={[
           styles.card,
           variant === 'dark' ? styles.darkCard : styles.lightCard,
-        ]}
-      >
+        ]}>
         <View style={styles.header}>
           <Text
             style={[
               styles.title,
               variant === 'dark' ? styles.darkText : styles.lightText,
-            ]}
-          >
+            ]}>
             Daily Verse
           </Text>
         </View>
@@ -390,26 +395,38 @@ const RandomAyahOfTheDay = ({ variant = 'light' }) => {
   return (
     <View style={styles.wrapper}>
       {/* Heading */}
-      <Text style={[styles.mainHeading, variant === 'dark' ? styles.darkText : styles.lightText]}>
+      <Text
+        style={[
+          styles.mainHeading,
+          variant === 'dark' ? styles.darkText : styles.lightText,
+        ]}>
         Ayah of the Day
       </Text>
 
       {/* Display Arabic Text and Translation */}
       <View style={styles.ayahContainer}>
         <Text
-          style={[styles.arabicText, variant === 'dark' ? styles.darkText : styles.lightText]}
-        >
+          style={[
+            styles.arabicText,
+            variant === 'dark' ? styles.darkText : styles.lightText,
+          ]}>
           {mockVerse.arabicText}
         </Text>
         <Text
-          style={[styles.translationText, variant === 'dark' ? styles.darkText : styles.lightText]}
-        >
+          style={[
+            styles.translationText,
+            variant === 'dark' ? styles.darkText : styles.lightText,
+          ]}>
           {mockVerse.translationEn}
         </Text>
       </View>
 
       {/* Surah Info */}
-      <Text style={[styles.surahInfo, variant === 'dark' ? styles.darkText : styles.lightText]}>
+      <Text
+        style={[
+          styles.surahInfo,
+          variant === 'dark' ? styles.darkText : styles.lightText,
+        ]}>
         {`Surah ${mockVerse.surahName} (${mockVerse.surahTransliteration})`}
       </Text>
 
@@ -419,16 +436,14 @@ const RandomAyahOfTheDay = ({ variant = 'light' }) => {
           style={[
             styles.button,
             variant === 'dark' ? styles.darkButton : styles.lightButton,
-            isLoading && { opacity: 0.5 },
+            isLoading && {opacity: 0.5},
           ]}
-          disabled={isLoading}
-        >
+          disabled={isLoading}>
           <Text
             style={[
               styles.buttonText,
               variant === 'dark' ? styles.darkText : styles.lightText,
-            ]}
-          >
+            ]}>
             {isLoading ? 'Loading...' : 'New Verse'}
           </Text>
         </TouchableOpacity>
@@ -450,7 +465,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   darkCard: {
-    backgroundColor: '#1e1b4b',
+    backgroundColor: '#155c4b',
   },
   lightCard: {
     backgroundColor: '#f4f1ff',

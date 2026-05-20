@@ -1,93 +1,162 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, {useMemo} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
+import {useNavigation, useNavigationState} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+/** Inner row height (icons + labels), excluding top padding and home indicator */
+export const BOTTOM_TAB_ROW_MIN_HEIGHT = 52;
+const TOP_PADDING = 8;
 
+/**
+ * Total vertical space consumed by the bottom tab bar (including safe area).
+ * Use for ScrollView / FlatList `contentContainerStyle.paddingBottom` so content clears the bar.
+ */
+export function useBottomTabBarInset() {
+  const insets = useSafeAreaInsets();
+  return BOTTOM_TAB_ROW_MIN_HEIGHT + TOP_PADDING + insets.bottom;
+}
 
-const RootNavigator = ({city, country}) => {
+const TABS = [
+  {
+    route: 'Dashboard',
+    label: 'Home',
+    icon: require('../../assets/images/dashboard.png'),
+  },
+  {
+    route: 'PrayersScreen',
+    label: 'Prayers',
+    icon: require('../../assets/images/prayers.png'),
+  },
+  {
+    route: 'QuranScreen',
+    label: 'Quran',
+    icon: require('../../assets/images/quran.png'),
+  },
+  {
+    route: 'UmmahApp',
+    label: 'Ummah',
+    icon: require('../../assets/images/umaah.png'),
+  },
+];
+
+function getActiveStackRouteName(state) {
+  if (!state?.routes?.length || state.index == null) {
+    return '';
+  }
+  return state.routes[state.index]?.name ?? '';
+}
+
+const RootNavigator = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const {width} = useWindowDimensions();
+
+  const activeRoute = useNavigationState(getActiveStackRouteName);
+
+  const {labelFontSize, iconSize} = useMemo(() => {
+    const label = Math.max(9, Math.min(12, Math.round(width / 36)));
+    const icon = Math.max(22, Math.min(28, Math.round(width / 15)));
+    return {labelFontSize: label, iconSize: icon};
+  }, [width]);
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Dashboard')}>
-        <Image
-          source={require('../../assets/images/dashboard.png')}
-          style={styles.icon}
-        />
-        <Text style={styles.buttonText}>Dashboard</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('PrayersScreen')}>
-        <Image
-          source={require('../../assets/images/prayers.png')}
-          style={styles.icon}
-        />
-        <Text style={styles.buttonText}>Prayers</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('QuranScreen')}>
-        <Image
-          source={require('../../assets/images/quran.png')}
-          style={styles.icon}
-        />
-        <Text style={styles.buttonText}>Quran</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('UmmahApp')}>
-        <Image
-          source={require('../../assets/images/umaah.png')}
-          style={styles.icon}
-        />
-        <Text style={styles.buttonText}>Ummah</Text>
-      </TouchableOpacity>
-      {/* <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('NearbyMosquesScreen')}>
-        <Image
-          source={require('../../assets/images/ummah.png')}
-          style={styles.icon}
-        />
-        <Text style={styles.buttonText}>Mosque</Text>
-      </TouchableOpacity> */}
+    <View
+      style={[
+        styles.shell,
+        {
+          paddingBottom: insets.bottom,
+          paddingTop: TOP_PADDING,
+        },
+      ]}>
+        <View style={[styles.row, {minHeight: BOTTOM_TAB_ROW_MIN_HEIGHT}]}>
+          {TABS.map(tab => {
+            const focused = activeRoute === tab.route;
+            return (
+              <TouchableOpacity
+                key={tab.route}
+                accessibilityRole="button"
+                accessibilityState={{selected: focused}}
+                accessibilityLabel={tab.label}
+                activeOpacity={0.7}
+                style={[styles.tab, focused && styles.tabFocused]}
+                onPress={() => navigation.navigate(tab.route)}>
+                <Image
+                  source={tab.icon}
+                  style={[
+                    styles.icon,
+                    {width: iconSize, height: iconSize},
+                    focused && styles.iconFocused,
+                  ]}
+                  resizeMode="contain"
+                />
+                <Text
+                  style={[styles.label, {fontSize: labelFontSize}, focused && styles.labelFocused]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.35}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#1e293b', // Slate background
+  shell: {
+    backgroundColor: 'rgba(13, 66, 54, 0.97)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: -3},
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
   },
-  button: {
-    // backgroundColor: '#0f172a', // Slate color
-    // paddingVertical: 10,
-    paddingHorizontal: 10,
-    marginVertical: 20,
-    borderRadius: 5,
-    flexDirection: 'column', // Align icon and text horizontally
-    alignItems: 'center', // Center align items
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 5, // Space between icon and text
+    paddingVertical: 4,
+    marginHorizontal: 2,
+    borderRadius: 10,
+  },
+  tabFocused: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   icon: {
-    width: 30, // Set the width for the image
-    height: 30, // Set the height for the image
-    marginRight: 8, // Space between icon and text
+    marginBottom: 2,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'semibold',
+  iconFocused: {
+    opacity: 1,
+  },
+  label: {
+    color: 'rgba(255,255,255,0.72)',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  labelFocused: {
+    color: '#fff',
   },
 });
 

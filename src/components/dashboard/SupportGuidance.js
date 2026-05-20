@@ -67,18 +67,17 @@
 
 // export default SupportGuidance;
 
-
 // SupportGuidance.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import QuestionCard from './QuestionCard';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
-const SupportGuidance = ({ questionItems, variant = 'dark' }) => {
+const SupportGuidance = ({questionItems, variant = 'dark'}) => {
   const navigation = useNavigation();
   const isDark = variant === 'dark';
 
-  const getIcon = (iconType) => {
+  const getIcon = iconType => {
     switch (iconType) {
       case 'prayer':
         return <Text style={styles.iconPlaceholder}>🙏</Text>;
@@ -93,18 +92,19 @@ const SupportGuidance = ({ questionItems, variant = 'dark' }) => {
     }
   };
 
-  const handleQuestionPress = (question) => {
-    navigation.navigate('QuestionDetailScreen', { question });
+  const handleQuestionPress = question => {
+    navigation.navigate('QuestionDetailScreen', {question});
   };
 
   return (
     <View style={[styles.container, isDark && styles.darkBackground]}>
-      <Text style={[styles.heading, isDark ? styles.darkText : styles.lightText]}>
+      <Text
+        style={[styles.heading, isDark ? styles.darkText : styles.lightText]}>
         Questions & Guidance
       </Text>
 
       <View style={styles.grid}>
-        {questionItems.map((item) => (
+        {questionItems.map(item => (
           <QuestionCard
             key={item.id}
             title={item.title}
@@ -119,7 +119,7 @@ const SupportGuidance = ({ questionItems, variant = 'dark' }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: 2,
     flex: 1,
   },
   darkBackground: {

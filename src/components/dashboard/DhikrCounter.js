@@ -1,11 +1,5 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, TouchableOpacity, StyleSheet, Modal} from 'react-native';
 import Progress from './Progress';
 
 const DhikrCounter = ({
@@ -45,21 +39,22 @@ const DhikrCounter = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.dhikrType}>{dhikrType}</Text>
-        {count > 0 && (
-          <TouchableOpacity onPress={resetCount}>
-            <Text style={styles.reset}>Reset</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={resetCount} disabled={count === 0}>
+          <Text style={[styles.reset, count === 0 && styles.resetHidden]}>
+            Reset
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
         style={styles.counterArea}
         onPress={toggleActive}
-        activeOpacity={0.9}
-      >
+        activeOpacity={0.9}>
         <TouchableOpacity onPress={incrementCount} activeOpacity={0.8}>
           <View style={styles.arabicBlock}>
-            <Text style={styles.arabicText}>{arabicText}</Text>
+            <Text style={styles.arabicText} numberOfLines={2}>
+              {arabicText}
+            </Text>
             <Text style={styles.percent}>{percentage}%</Text>
           </View>
         </TouchableOpacity>
@@ -68,7 +63,6 @@ const DhikrCounter = ({
           <View style={[styles.progressBar, { width: `${percentage}%` }]} />
         </View> */}
         <Progress value={percentage} />
-
 
         <View style={styles.countRow}>
           <Text style={styles.countText}>{count}</Text>
@@ -101,16 +95,19 @@ const DhikrCounter = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1E293B',
+    flex: 1,
+    minHeight: 200,
+    backgroundColor: '#0d4236',
     borderColor: '#334155',
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 24,
     marginBottom: 8,
   },
   dhikrType: {
@@ -121,13 +118,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
   },
+  resetHidden: {
+    opacity: 0,
+  },
   counterArea: {
+    flex: 1,
     alignItems: 'center',
-    // width: '50%',
-    height: "fit-content",
+    justifyContent: 'space-between',
   },
   arabicBlock: {
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
     marginBottom: 10,
     width: '100%',
   },
@@ -135,6 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#FBBF24',
     marginBottom: 4,
+    textAlign: 'center',
   },
   percent: {
     fontSize: 16,

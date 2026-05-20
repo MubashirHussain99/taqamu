@@ -74,10 +74,10 @@ const HadithOfTheDay = ({
 const createStyles = (isDark, isMobile) =>
   StyleSheet.create({
     card: {
-      backgroundColor: isDark ? '#1e1b4b' : '#f4f1ff',
+      backgroundColor: isDark ? '#0d4236' : '#f4f1ff',
       borderRadius: 12,
       overflow: 'hidden',
-      margin: 10,
+      // margin: 10,
       shadowColor: '#000',
       shadowOpacity: 0.1,
       shadowRadius: 6,
@@ -89,7 +89,7 @@ const createStyles = (isDark, isMobile) =>
       padding: 12,
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#333' : '#ccc',
-      backgroundColor: isDark ? '#292655' : '#eee',
+      backgroundColor: isDark ? '#0d4236' : '#eee',
     },
     titleArea: {
       flex: 1,

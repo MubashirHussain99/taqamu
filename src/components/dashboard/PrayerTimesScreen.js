@@ -9,10 +9,14 @@ import {
   Modal,
 } from 'react-native';
 import {format} from 'date-fns';
-import RootNavigator from './BottomNavigation';
+import RootNavigator, {
+  useBottomTabBarInset,
+} from './BottomNavigation';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 // PrayerTimesScreen component
 const PrayerTimesScreen = ({route, navigation}) => {
+  const tabBarInset = useBottomTabBarInset();
   const {prayers, selectedDate, prayerCompletionState, onTogglePrayed} =
     route.params; // prayers props passed from previous screen
   const today = new Date();
@@ -46,7 +50,9 @@ const PrayerTimesScreen = ({route, navigation}) => {
           </Text>
         </View>
 
-        <ScrollView style={styles.container1}>
+        <ScrollView
+          style={styles.container1}
+          contentContainerStyle={{paddingBottom: 24 + tabBarInset}}>
           <Text style={styles.title}>Prayer Times</Text>
 
           <View style={styles.prayerList}>
@@ -189,7 +195,7 @@ export default PrayerTimesScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e1b4b',
+    backgroundColor: APP_BACKGROUND,
     // paddingTop: 40,
     // paddingHorizontal: 20,
   },
@@ -259,6 +265,7 @@ const styles = StyleSheet.create({
   },
 
   container1: {
+    flex: 1,
     padding: 10,
   },
   title: {

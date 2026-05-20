@@ -308,11 +308,15 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import RootNavigator from '../../components/dashboard/BottomNavigation';
+import RootNavigator, {
+  useBottomTabBarInset,
+} from '../../components/dashboard/BottomNavigation';
 import {useNavigation} from '@react-navigation/native';
+import {APP_BACKGROUND, screenStyles} from '../../styles/screenStyles';
 
 const NearbyMosquesScreen = () => {
   const navigation = useNavigation();
+  const tabBarInset = useBottomTabBarInset();
   const [mosques, setMosques] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -364,7 +368,7 @@ const NearbyMosquesScreen = () => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#1e293b'}}>
+    <View style={screenStyles.container}>
       <View style={styles.container}>
         {/* <Text style={styles.title}>Nearby Mosques</Text> */}
         <View style={styles.header}>
@@ -384,7 +388,7 @@ const NearbyMosquesScreen = () => {
           data={mosques}
           keyExtractor={item => item.id.toString()}
           renderItem={renderMosque}
-          contentContainerStyle={{paddingBottom: 20}}
+          contentContainerStyle={{paddingBottom: 20 + tabBarInset}}
         />
       </View>
       <RootNavigator />
@@ -396,7 +400,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#1e293b',
+    backgroundColor: APP_BACKGROUND,
   },
   header: {
     flexDirection: 'row',

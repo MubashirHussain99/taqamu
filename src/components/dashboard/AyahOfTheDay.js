@@ -1,6 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Share } from 'react-native';
-import { useIsMobile } from './useIsMobile';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Share,
+} from 'react-native';
+import {useIsMobile} from './useIsMobile';
 // import { useIsMobile } from '@/hooks/use-mobile'; // If you're using a custom hook for mobile detection
 
 const AyahOfTheDay = ({
@@ -34,34 +41,34 @@ const AyahOfTheDay = ({
     }
   };
 
-  const bgColor = isDark ? '#1e1b4b' : '#f4f1ff';
+  const bgColor = isDark ? '#0d4236' : '#f4f1ff';
   const textColor = isDark ? '#ffffff' : '#2f2f2f';
   const subtextColor = isDark ? '#b0b0b0' : '#808080';
   const accentColor = isDark ? '#34d399' : '#10b981';
   const btnBgColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#a7f3d0';
   const readBtnClass = isDark
-    ? { backgroundColor: 'rgba(56, 189, 94, 0.1)', borderRadius: 20 }
-    : { backgroundColor: '#d1fae5', borderRadius: 20 };
+    ? {backgroundColor: 'rgba(56, 189, 94, 0.1)', borderRadius: 20}
+    : {backgroundColor: '#d1fae5', borderRadius: 20};
 
   return (
     <View
-      style={[styles.card, { backgroundColor: bgColor }, className]}
-      onTouchEnd={handleCardClick}
-    >
-      <View style={[styles.header, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+      style={[styles.card, {backgroundColor: bgColor}, className]}
+      onTouchEnd={handleCardClick}>
+      <View
+        style={[styles.header, {backgroundColor: 'rgba(255, 255, 255, 0.1)'}]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.accent, { color: accentColor }]}>
+          <Text style={[styles.accent, {color: accentColor}]}>
             <Image
               source={require('../../assets/images/book-icon.png')} // Replace with your own icon
-              style={{ width: isMobile ? 20 : 24, height: isMobile ? 20 : 24 }}
+              style={{width: isMobile ? 20 : 24, height: isMobile ? 20 : 24}}
             />
           </Text>
           <View style={styles.headerText}>
-            <Text style={[styles.surahReference, { color: textColor }]}>
+            <Text style={[styles.surahReference, {color: textColor}]}>
               {surahReference || 'Daily Verse'}
             </Text>
             {surahNumber && ayahNumber && (
-              <Text style={[styles.continueReading, { color: subtextColor }]}>
+              <Text style={[styles.continueReading, {color: subtextColor}]}>
                 Continue Reading
               </Text>
             )}
@@ -69,22 +76,21 @@ const AyahOfTheDay = ({
         </View>
         <TouchableOpacity
           // style={[styles.shareButton, { backgroundColor: btnBgColor }]}
-          onPress={handleShareClick}
-        >
+          onPress={handleShareClick}>
           <Image
             source={require('../../assets/images/share-icon.png')} // Replace with your own share icon
-            style={{ width: 30, height: 30 }}
+            style={{width: 30, height: 30}}
           />
         </TouchableOpacity>
       </View>
 
       <View style={styles.body}>
         {ayahArabic && (
-          <Text style={[styles.ayahArabic, { color: textColor }]}>
+          <Text style={[styles.ayahArabic, {color: textColor}]}>
             {ayahArabic}
           </Text>
         )}
-        <Text style={[styles.ayahTranslation, { color: textColor }]}>
+        <Text style={[styles.ayahTranslation, {color: textColor}]}>
           {ayahTranslation}
         </Text>
 
@@ -96,12 +102,11 @@ const AyahOfTheDay = ({
           {onMarkAsRead && (
             <TouchableOpacity
               style={[styles.readButton, readBtnClass]}
-              onPress={(e) => {
+              onPress={e => {
                 e.stopPropagation();
                 onMarkAsRead();
-              }}
-            >
-              <Text style={{ color: isRead ? '#34d399' : '#10b981' }}>
+              }}>
+              <Text style={{color: isRead ? '#34d399' : '#10b981'}}>
                 {isRead ? 'Read' : 'Read →'}
               </Text>
             </TouchableOpacity>
@@ -117,7 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     marginBottom: 16,

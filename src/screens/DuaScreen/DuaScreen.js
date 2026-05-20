@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,10 @@ import {
   Platform,
   Clipboard,
   Alert,
+  SafeAreaView,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useNavigation} from '@react-navigation/native';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const duas = [
   {
@@ -264,9 +266,15 @@ const duas = [
   },
 ];
 
-const DuaScreen = ({navigation}) => {
+const DuaScreen = () => {
+  const navigation = useNavigation();
   const [expandedCategory, setExpandedCategory] = useState(null);
   const isTablet = Dimensions.get('window').width >= 768;
+
+  const totalDuas = useMemo(
+    () => duas.reduce((sum, category) => sum + category.items.length, 0),
+    [],
+  );
 
   const toggleCategory = index => {
     if (expandedCategory === index) {
@@ -282,20 +290,29 @@ const DuaScreen = ({navigation}) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header with Back Button */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={{fontSize:16,fontWeight:"600",color:"#fff"}}>❌</Text>
+          accessibilityLabel="Go back">
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.header, isTablet && styles.headerTablet]}>
-          Daily Duas
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerText, isTablet && styles.headerTextTablet]}>
+            Daily Duas
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {duas.length} categories · {totalDuas} duas
+          </Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}>
         {duas.map((category, index) => (
           <View
             key={index}
@@ -314,7 +331,7 @@ const DuaScreen = ({navigation}) => {
                 {category.title}
               </Text>
               <Text style={styles.toggleIcon}>
-                {expandedCategory === index ? '▼' : '▶'}
+                {expandedCategory === index ? '▲' : '▼'}
               </Text>
             </TouchableOpacity>
 
@@ -359,78 +376,105 @@ const DuaScreen = ({navigation}) => {
           </View>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    backgroundColor: APP_BACKGROUND,
+  },
+  scrollView: {
+    flex: 1,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   backButton: {
-    marginRight: 15,
+    padding: 8,
+    width: 40,
   },
-  scrollContainer: {
-    paddingBottom: 30,
+  backButtonText: {
+    fontSize: 28,
+    color: '#fff',
+    lineHeight: 28,
   },
-  header: {
-    fontSize: 24,
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    flex: 1,
+    textAlign: 'center',
   },
-  headerTablet: {
-    fontSize: 32,
+  headerTextTablet: {
+    fontSize: 28,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#a7f3d0',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   categoryContainer: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    marginHorizontal: 15,
-    marginBottom: 15,
+    backgroundColor: '#0d4236',
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 2},
   },
   categoryContainerTablet: {
-    marginHorizontal: 40,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   categoryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 14,
   },
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: '#f8fafc',
+    flex: 1,
+    marginRight: 8,
   },
   categoryTitleTablet: {
     fontSize: 22,
   },
   toggleIcon: {
-    fontSize: 16,
-    color: '#7f8c8d',
+    fontSize: 14,
+    color: '#a7f3d0',
   },
   duasList: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 14,
     paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(167, 243, 208, 0.15)',
   },
   duaItem: {
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: 'rgba(167, 243, 208, 0.12)',
   },
   duaItemTablet: {
     paddingVertical: 20,
@@ -441,7 +485,7 @@ const styles = StyleSheet.create({
   duaArabic: {
     fontSize: 18,
     lineHeight: 30,
-    color: '#2c3e50',
+    color: '#ecfdf5',
     textAlign: 'right',
     marginBottom: 10,
     fontFamily:
@@ -456,10 +500,9 @@ const styles = StyleSheet.create({
   duaTranslation: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#7f8c8d',
+    color: '#a7f3d0',
     textAlign: 'left',
     marginBottom: 15,
-    fontStyle: 'italic',
   },
   duaTranslationTablet: {
     fontSize: 16,
@@ -471,18 +514,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   copyButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#10b981',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 5,
-    marginRight: 10,
+    borderRadius: 8,
   },
   copyButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 14,
-  },
-  bookmarkButton: {
-    padding: 5,
+    fontWeight: '600',
   },
 });
 

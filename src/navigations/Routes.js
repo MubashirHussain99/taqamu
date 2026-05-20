@@ -1,5 +1,6 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {APP_BACKGROUND} from '../constants/colors';
 import SplashScreen from '../screens/splashScreen/splashScreen';
 import Login from '../screens/login/login';
 import Register from '../screens/register/register';
@@ -17,13 +18,18 @@ import PrayerTimesScreen from '../components/dashboard/PrayerTimesScreen';
 import Notifications from '../screens/Notifications/Notifications';
 import UmmahApp from '../screens/UmmahApp/UmmahApp';
 import EditProfileScreen from '../screens/EditProfileScreen/EditProfileScreen';
+import ProfileScreen from '../screens/ProfileScreen/ProfileScreen';
 import NearbyMosquesScreen from '../screens/NearbyMosquesScreen/NearbyMosquesScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppRoutes() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {backgroundColor: APP_BACKGROUND},
+      }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
@@ -44,6 +50,12 @@ export default function AppRoutes() {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="UmmahApp" component={UmmahApp} />
       <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen
+        name="EditProfileModal"
+        component={EditProfileScreen}
+        options={{presentation: 'modal'}}
+      />
       <Stack.Screen
         name="NearbyMosquesScreen"
         component={NearbyMosquesScreen}

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth from '@react-native-firebase/auth';
+import {saveUserSession} from '../../services/authService';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const {width} = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -24,11 +26,8 @@ const LoginScreen = () => {
   const navigation = useNavigation();
 
   const validateForm = () => {
-    if (!email || !email.includes('@')) {
-      return 'Please enter a valid email address';
-    }
-    if (!password || password.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (!email || !password) {
+      return 'Please fill all required fields.';
     }
     return null;
   };
@@ -44,84 +43,41 @@ const LoginScreen = () => {
     setError(null);
 
     try {
-      // Use the correct API URL for your environment
-      const API_URL = Platform.select({
-        android: 'https://taqamu-app-backend.vercel.app/api',
+      const userCredential = await auth().signInWithEmailAndPassword(
+        email.trim(),
+        password,
+      );
 
-        ios: 'https://taqamu-app-backend.vercel.app/api',
-        default: 'https://taqamu-app-backend.vercel.app/api',
-      });
+      await saveUserSession(userCredential.user);
 
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          // Fixed: Added proper body formatting
-          email: email,
-          password: password,
-        }),
-      });
+      console.log('Login Success:', userCredential.user.email);
 
-      // First check if response is HTML (starts with '<')
-      // const responseText = await response.text();
-      // if (responseText.startsWith('<')) {
-      //   throw new Error(
-      //     'Server returned HTML instead of JSON. Check API endpoint.',
-      //   );
-      // }
-      // const data = JSON.parse(responseText);
-      // console.log(data.user, '------data-----');
-
-      // Properly await AsyncStorage operations
-      // await AsyncStorage.setItem('token', data.token);
-      // await AsyncStorage.setItem('user', JSON.stringify(data.user));
-      // // Now parse as JSON
-      // navigation.navigate('Dashboard');
-      const responseText = await response.text();
-      console.log('Raw API Response:', responseText); // Log the raw response text
-
-      // Check if the response starts with '<', which may indicate HTML instead of JSON
-      if (responseText.startsWith('<')) {
-        throw new Error(
-          'Server returned HTML instead of JSON. Check API endpoint.',
-        );
-      }
-
-      const data = JSON.parse(responseText);
-      console.log('Parsed API Data:', data); // Log the parsed response data
-
-      if (data.token && data.user) {
-        await AsyncStorage.setItem('token', data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(data.user));
-        navigation.navigate('Dashboard');
-      } else {
-        throw new Error('Invalid response from server');
-      }
+      navigation.replace('Dashboard');
 
       setEmail('');
       setPassword('');
     } catch (err) {
-      console.error('Login failed:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      console.log('Firebase Login Error:', err);
+
+      let message = 'Login failed. Please try again.';
+
+      if (err.code === 'auth/user-not-found') {
+        message = 'No user found with this email';
+      } else if (
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-credential'
+      ) {
+        message = 'Incorrect email or password';
+      } else if (err.code === 'auth/invalid-email') {
+        message = 'Invalid email address';
+      } else if (err.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please try again later.';
+      }
+
+      setError(message);
     } finally {
       setIsLoading(false);
     }
-  };
-  const removeUserData = async () => {
-    try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      console.log('User data removed successfully.');
-    } catch (error) {
-      console.error('Error removing user data:', error);
-    }
-  };
-  const handleLogout = async () => {
-    await removeUserData();
-    // Navigate to Login screen or handle the logout process
-    navigation.navigate('Login');
   };
 
   return (
@@ -172,10 +128,6 @@ const LoginScreen = () => {
           <View style={styles.line} />
         </View>
 
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.registerButton}
           onPress={() => navigation.navigate('Register')}>
@@ -190,10 +142,10 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: APP_BACKGROUND,
   },
   container: {
-    backgroundColor: '#0f172a',
+    backgroundColor: APP_BACKGROUND,
     padding: isTablet ? 40 : 20,
     marginHorizontal: isTablet ? '25%' : '5%',
     borderRadius: 12,

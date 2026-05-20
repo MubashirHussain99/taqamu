@@ -345,6 +345,7 @@ import {
   Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {APP_BACKGROUND} from '../../styles/screenStyles';
 
 const UmmahDonationScreen = () => {
   const isTablet = Dimensions.get('window').width >= 768;
@@ -456,6 +457,7 @@ const UmmahDonationScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: APP_BACKGROUND,
   },
   backgroundImage: {
     flex: 1,
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: 20,
     paddingVertical: 30,
-    backgroundColor: '#0f172a', // Slate color
+    backgroundColor: APP_BACKGROUND,
   },
   headerContainer: {
     flexDirection: 'row',
